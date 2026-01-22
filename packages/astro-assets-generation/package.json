@@ -13,9 +13,18 @@
       "import": "./dist/index.js"
     }
   },
+  "dependencies": {
+    "@takumi-rs/image-response": "0.65.0",
+    "ts-pattern": "5.9.0"
+  },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "20.0.0",
+    "@types/react": "19.2.8",
+    "@types/react-dom": "19.2.3",
     "astro": "5.16.12",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "tsup": "8.5.1",
     "typescript": "latest"
   }
