@@ -71,4 +71,6 @@ export const apiImageEndpoint: (modules: Record<string, unknown>) => APIRoute =
   };
 
 export { getAstroImageBase64, configure } from "./image";
+export { extractEmoji } from "./emoji";
+export { Emoji } from "./components/Emoji";
 export type { AssetImageConfig } from "./types";

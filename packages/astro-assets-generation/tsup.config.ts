@@ -8,6 +8,13 @@ export default defineConfig({
   dts: true,
   clean: true,
   minify: true,
-  external: ["astro", "react", "react-dom"],
-  treeshake: true,
+  external: [
+    "astro",
+    "react",
+    "react-dom",
+    "node:fs",
+    "node:path",
+    "@twemoji/svg",
+  ],
+  onSuccess: "cp src/emoji-data.json dist/emoji-data.json",
 });
