@@ -1,11 +1,39 @@
 ---
-import Welcome from "../components/Welcome.astro";
-import Layout from "../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const posts = await getCollection("blog");
 ---
 
 <Layout>
-  <Welcome />
+  <div class="max-w-5xl mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold mb-8">📝 Mon Blog</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {
+        posts.map((post) => (
+          <a
+            href={`/blog/${post.id}`}
+            class="block p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow border border-gray-200"
+          >
+            <h2 class="text-xl font-semibold mb-2">{post.data.title}</h2>
+            {post.data.description && (
+              <p class="text-gray-600 mb-4 line-clamp-3">
+                {post.data.description}
+              </p>
+            )}
+            {post.data.tags && (
+              <div class="flex flex-wrap gap-2">
+                {post.data.tags.slice(0, 3).map((tag: string) => (
+                  <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </a>
+        ))
+      }
+    </div>
+  </div>
 </Layout>
