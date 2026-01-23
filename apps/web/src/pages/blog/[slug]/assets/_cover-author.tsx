@@ -1,5 +1,6 @@
 import { getEntry } from "astro:content";
 import { getAstroImageBase64 } from "@bearstudio/astro-assets-generation";
+import { Emoji, extractEmoji } from "@bearstudio/astro-assets-generation";
 
 interface PostImageParams {
   params: { slug?: string };
@@ -33,6 +34,8 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
     ? await getAstroImageBase64(author.data.image)
     : null;
 
+  const { text: cleanTitle, emojis: titleEmojis } = extractEmoji(title);
+
   return (
     <div
       tw="flex flex-col w-full h-full p-16"
@@ -59,14 +62,29 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
           </div>
         )}
 
+        <p>
+          Astro <Emoji emoji="🚀" /> Takumi <Emoji emoji="🔥" />
+        </p>
+
         <h1
-          tw="font-bold text-white mb-6"
+          tw="font-bold text-white mb-2"
           style={{
-            fontSize: title.length > 50 ? 56 : 72,
+            fontSize: cleanTitle.length > 50 ? 56 : 72,
             lineHeight: 1.2,
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
           }}
         >
-          {title}
+          <span>{cleanTitle}</span>
+
+          {titleEmojis.length > 0 && (
+            <span tw="flex">
+              {titleEmojis.map((emoji, index) => (
+                <Emoji key={index} emoji={emoji} size={64} />
+              ))}
+            </span>
+          )}
         </h1>
 
         {description && (

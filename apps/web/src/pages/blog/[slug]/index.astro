@@ -19,11 +19,10 @@ if (!post) {
 
 const { Content } = await render(post);
 
-const ogImage = new URL(`${slug}/assets/post.png`, Astro.url);
 const authorImage = new URL(`${slug}/assets/cover-author.png`, Astro.url);
 ---
 
-<Layout ogImage={ogImage}>
+<Layout>
   <article class="max-w-3xl mx-auto px-4 py-8">
     <h1 class="text-4xl font-bold mb-4">{post.data.title}</h1>
 
