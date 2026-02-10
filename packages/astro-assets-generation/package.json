@@ -1,6 +1,6 @@
 {
   "name": "@bearstudio/astro-assets-generation",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Astro integration to generate assets with Takumi",
   "scripts": {
@@ -17,6 +17,10 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "dependencies": {
     "@takumi-rs/image-response": "0.65.0",
     "@twemoji/svg": "15.0.0",
