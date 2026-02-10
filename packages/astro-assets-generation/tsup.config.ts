@@ -1,4 +1,6 @@
 import { defineConfig } from "tsup";
+import { copyFileSync, mkdirSync, readdirSync, existsSync } from "node:fs";
+import { join } from "node:path";
 
 export default defineConfig({
   entry: {
@@ -16,5 +18,17 @@ export default defineConfig({
     "node:path",
     "@twemoji/svg",
   ],
-  onSuccess: "cp src/emoji-data.json dist/emoji-data.json",
+  onSuccess: async () => {
+    copyFileSync("src/emoji-data.json", "dist/emoji-data.json");
+
+    mkdirSync("dist/fonts", { recursive: true });
+
+    const fontsDir = "src/fonts";
+    if (existsSync(fontsDir)) {
+      const ttfFiles = readdirSync(fontsDir).filter((f) => f.endsWith(".ttf"));
+      ttfFiles.forEach((file) => {
+        copyFileSync(join(fontsDir, file), join("dist/fonts", file));
+      });
+    }
+  },
 });
