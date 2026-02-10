@@ -2,12 +2,6 @@ import { FontConfig } from "./types";
 
 export const DEFAULT_FONTS = [
   {
-    name: "NotoSans",
-    url: "./fonts/NotoSans-Regular.ttf",
-    weight: 400,
-    style: "normal",
-  },
-  {
     name: "Thai",
     url: "./fonts/NotoSansThai-Regular.ttf",
     weight: 400,
@@ -32,6 +26,10 @@ export const DEFAULT_FONTS = [
     style: "normal",
   },
 ] satisfies FontConfig[];
+
+export function getAllFonts(customFonts: FontConfig[] = []): FontConfig[] {
+  return [...customFonts, ...DEFAULT_FONTS];
+}
 
 export const DEFAULT_COLORS = {
   debugBackground: "#0a0a0a",

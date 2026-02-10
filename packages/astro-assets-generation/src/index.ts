@@ -70,7 +70,9 @@ export const apiImageEndpoint: (modules: Record<string, unknown>) => APIRoute =
     }
   };
 
-export { getAstroImageBase64, configure } from "./image";
+export { getAstroImageBase64, configure, getConfiguredFonts } from "./image";
 export { extractEmoji } from "./emoji";
 export { Emoji } from "./components/Emoji";
-export type { AssetImageConfig } from "./types";
+export { FontWrapper } from "./components/FontWrapper";
+export type { AssetImageConfig, FontConfig, FontConfiguration } from "./types";
+export type { FontWrapperProps } from "./components/FontWrapper";

@@ -1,5 +1,6 @@
 import { apiImageEndpoint } from "@bearstudio/astro-assets-generation";
 import type { APIRoute } from "astro";
+import "@/lib/assets";
 
 export const prerender = false;
 
