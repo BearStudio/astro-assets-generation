@@ -234,6 +234,19 @@ export async function PNG(component: JSX.Element, config: AssetImageConfig) {
   return response.arrayBuffer();
 }
 
+export async function JPEG(component: JSX.Element, config: AssetImageConfig) {
+  const fonts = await getFonts();
+
+  const response = new ImageResponse(component, {
+    width: config.width,
+    height: config.height,
+    fonts,
+    format: "jpeg",
+  });
+
+  return response.arrayBuffer();
+}
+
 export async function DEBUG_HTML(
   component: JSX.Element,
   config: AssetImageConfig
@@ -308,6 +321,15 @@ export function generateImageResponsePNG(buffer: ArrayBuffer) {
   return new Response(buffer, {
     headers: {
       "Content-Type": "image/png",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
+}
+
+export function generateImageResponseJPEG(buffer: ArrayBuffer) {
+  return new Response(buffer, {
+    headers: {
+      "Content-Type": "image/jpeg",
       "Cache-Control": "public, max-age=31536000, immutable",
     },
   });

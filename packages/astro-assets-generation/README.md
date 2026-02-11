@@ -5,7 +5,7 @@ An Astro integration to generate dynamic assets (OG images, social media cards, 
 ## Features
 
 - 🎨 **React-based templates**: Create image templates using React components
-- 🖼️ **PNG generation**: Generate high-quality PNG images from React components
+- 🖼️ **Multiple formats**: Generate PNG and JPEG/JPG images from React components
 - 🐛 **Debug mode**: Preview your templates in the browser with HTML debug view
 - 😀 **Emoji support**: Built-in emoji rendering using Twemoji SVGs
 - 🌍 **Multilingual support**: Built-in fonts for Thai, Japanese, Korean, and Arabic
@@ -82,6 +82,7 @@ export const GET: APIRoute = apiImageEndpoint(
 Access your generated images at:
 
 - PNG: `/blog/my-post/assets/your-template-name.png`
+- JPEG: `/blog/my-post/assets/your-template-name.jpg` or `/blog/my-post/assets/your-template-name.jpeg`
 - Debug HTML: `/blog/my-post/assets/your-template-name.debug`
 
 ## Font Management
@@ -280,7 +281,7 @@ Creates an Astro API route handler that generates images from your templates.
 **URL Pattern:** `[__image].[__type]`
 
 - `__image`: The template name (filename without `_` prefix and `.tsx` extension)
-- `__type`: Either `png` or `debug`
+- `__type`: Either `png`, `jpg`, `jpeg`, or `debug`
 
 ### `getAstroImageBase64(image)`
 

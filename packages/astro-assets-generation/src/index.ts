@@ -2,8 +2,10 @@ import type { APIRoute } from "astro";
 import {
   DEBUG_HTML,
   PNG,
+  JPEG,
   generateImageResponseHTML,
   generateImageResponsePNG,
+  generateImageResponseJPEG,
 } from "./image";
 
 export class NotFoundAssetError extends Error {
@@ -50,9 +52,14 @@ export const apiImageEndpoint: (modules: Record<string, unknown>) => APIRoute =
         return generateImageResponsePNG(png);
       }
 
+      if (params.__type === "jpg" || params.__type === "jpeg") {
+        const jpeg = await JPEG(component, config);
+        return generateImageResponseJPEG(jpeg);
+      }
+
       return new Response(null, {
         status: 404,
-        statusText: "Format not supported (use png or debug)",
+        statusText: "Format not supported (use png, jpg, jpeg or debug)",
       });
     } catch (error) {
       console.error("[API] Error:", error);
