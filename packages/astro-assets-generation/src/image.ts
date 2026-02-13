@@ -259,6 +259,7 @@ export async function DEBUG_HTML(
   <html>
     <head>
       <title>Debug OG Image</title>
+      <script src="https://cdn.tailwindcss.com"></script>
       <style>
       ${allFonts
         .map(
@@ -304,13 +305,18 @@ export async function DEBUG_HTML(
           transform: scale(var(--scale));
           transform-origin: top left;
           background: white;
+          overflow: hidden;
+        }
+        /* Replace tw attribute with class for Tailwind */
+        [tw] {
+          /* This will be handled by replacing tw with class in the HTML */
         }
       </style>
     </head>
     <body>
       <div id="screen">
         <div id="render">
-          ${html}
+          ${html.replace(/tw=/g, "class=")}
         </div>
       </div>
     </body>
