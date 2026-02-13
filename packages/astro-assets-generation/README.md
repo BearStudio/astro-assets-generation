@@ -1,403 +1,28 @@
 # @bearstudio/astro-assets-generation
 
-An Astro integration to generate dynamic assets (OG images, social media cards, etc.) using React components and [Takumi](https://github.com/takumi-rs/takumi).
+Generate dynamic images (OG images, social media cards, etc.) using React components in your Astro projects. Powered by [Takumi](https://github.com/takumi-rs/takumi).
 
 ## Features
 
-- 🎨 **React-based templates**: Create image templates using React components
-- 🖼️ **Multiple formats**: Generate PNG and JPEG/JPG images from React components
-- 🐛 **Debug mode**: Preview your templates in the browser with HTML debug view
-- 😀 **Emoji support**: Built-in emoji rendering using Twemoji SVGs
-- 🌍 **Multilingual support**: Built-in fonts for Thai, Japanese, Korean, and Arabic
-- 🔤 **Custom fonts**: Easy custom font configuration with automatic fallbacks
-- 📦 **Astro integration**: Seamless integration with Astro's content collections and routing
-- 🎯 **Type-safe**: Full TypeScript support
+- 🎨 Design images with React components and JSX
+- 🖼️ Generate PNG, JPEG, or JPG images
+- 🐛 Debug mode to preview templates in browser
+- 😀 Built-in emoji support with Twemoji
+- 🌍 Automatic multilingual support (Thai, Japanese, Korean, Arabic)
+- 🔤 Custom fonts with automatic fallbacks
+- ⚡ Fast Rust-based rendering
 
 ## Installation
 
 ```bash
 pnpm add @bearstudio/astro-assets-generation
-# or
-npm install @bearstudio/astro-assets-generation
-# or
-yarn add @bearstudio/astro-assets-generation
 ```
 
 ## Quick Start
 
-### 1. Configure the library
+### 1. Configure Astro
 
-In your Astro project, configure the library (typically in `src/lib/assets.ts` or similar):
-
-```typescript
-import { configure } from "@bearstudio/astro-assets-generation";
-
-configure({
-  debugBackground: "#0a0a0a", // Background color for debug HTML view
-  siteUrl: import.meta.env.SITE ?? "http://localhost:4321",
-  isDev: import.meta.env.DEV,
-});
-```
-
-### 2. Create an image template
-
-Create a React component for your image template. The file should be prefixed with `_` (e.g., `_cover-author.tsx`):
-
-```tsx
-// src/pages/blog/[slug]/assets/_your-template-name.tsx
-import type { AssetImageConfig } from "@bearstudio/astro-assets-generation";
-
-export const config: AssetImageConfig = {
-  width: 1200,
-  height: 630,
-  debugScale: 0.5, // Optional: scale for debug view
-};
-
-export default function YourTemplateName() {
-  // Your logic here to fetch data if needed
-  return (
-   // The content of your image
-  )}
-
-```
-
-### 3. Create the API route
-
-Create an API route that uses `apiImageEndpoint`:
-
-```typescript
-// src/pages/blog/[slug]/assets/[__image].[__type].ts
-import { apiImageEndpoint } from "@bearstudio/astro-assets-generation";
-import type { APIRoute } from "astro";
-
-export const prerender = false;
-
-export const GET: APIRoute = apiImageEndpoint(
-  import.meta.glob("./_*.tsx", { eager: true })
-);
-```
-
-### 4. Use the generated image
-
-Access your generated images at:
-
-- PNG: `/blog/my-post/assets/your-template-name.png`
-- JPEG: `/blog/my-post/assets/your-template-name.jpg` or `/blog/my-post/assets/your-template-name.jpeg`
-- Debug HTML: `/blog/my-post/assets/your-template-name.debug`
-
-## Font Management
-
-### Built-in Non-Latin Font Support
-
-The library includes built-in support for non-Latin characters with the following fonts:
-
-- **Thai**: Noto Sans Thai
-- **Japanese**: Noto Sans JP
-- **Korean**: Noto Sans KR
-- **Arabic**: Noto Sans Arabic
-
-These fonts are automatically loaded and available in all templates.
-
-### Custom Fonts
-
-You can add custom fonts to your templates by configuring them in the `configure()` function:
-
-```typescript
-// src/lib/assets.ts
-import {
-  configure,
-  type FontConfig,
-} from "@bearstudio/astro-assets-generation";
-
-const customFonts: FontConfig[] = [
-  {
-    name: "Geist",
-    url: "/fonts/Geist.ttf",
-    weight: 400,
-    style: "normal",
-  },
-  {
-    name: "Inter",
-    url: "https://example.com/fonts/Inter-Bold.ttf",
-    weight: 700,
-    style: "normal",
-  },
-];
-
-configure({
-  debugBackground: "#0a0a0a",
-  siteUrl: import.meta.env.SITE ?? "http://localhost:4321",
-  isDev: import.meta.env.DEV,
-  customFonts, // Add your custom fonts here
-});
-```
-
-#### Supported Font URL Formats
-
-- **Web paths**: `/fonts/Font.ttf` (resolved from `public/` directory)
-- **HTTP/HTTPS URLs**: `https://example.com/fonts/Font.ttf`
-- **Relative paths**: `./fonts/Font.ttf` (for package-internal fonts)
-- **Absolute paths**: `/absolute/path/to/Font.ttf`
-
-### FontWrapper Component
-
-Use the `FontWrapper` component to manage fonts in your templates with automatic fallback to non-Latin fonts:
-
-```tsx
-import {
-  FontWrapper,
-  Emoji,
-  extractEmoji,
-} from "@bearstudio/astro-assets-generation";
-
-export default function MyTemplate() {
-  const { text: cleanTitle, emojis } = extractEmoji("Hello 世界 مرحبا 🚀");
-
-  return (
-    <FontWrapper fontFamily="Geist" style={{ background: "white" }}>
-      <div tw="flex flex-col p-16">
-        <h1 tw="text-6xl font-bold">
-          {cleanTitle}
-          {emojis.map((emoji, i) => (
-            <Emoji key={i} emoji={emoji} size={64} />
-          ))}
-        </h1>
-        <p tw="text-xl">
-          English, 日本語, 한국어, العربية, ไทย - all supported!
-        </p>
-      </div>
-    </FontWrapper>
-  );
-}
-```
-
-**How it works:**
-
-The `FontWrapper` creates a font stack that automatically includes:
-
-1. Your primary font (via `fontFamily` prop)
-2. Custom fonts configured globally
-3. Built-in non-Latin fonts (Thai, Japanese, Korean, Arabic)
-4. Generic `sans-serif` fallback
-
-This ensures that all characters render correctly, even if your primary font doesn't support them.
-
-### FontWrapper Props
-
-```typescript
-interface FontWrapperProps {
-  children: ReactNode;
-  fontFamily?: string; // Primary font family name
-  customFonts?: FontConfig[]; // Override global fonts (optional)
-  style?: React.CSSProperties; // Additional CSS styles
-}
-```
-
-### Example: Multi-language Support
-
-```tsx
-import { FontWrapper } from "@bearstudio/astro-assets-generation";
-
-export const config = {
-  width: 1200,
-  height: 630,
-};
-
-export default function MultilingualCard() {
-  return (
-    <FontWrapper fontFamily="Geist">
-      <div tw="flex flex-col w-full h-full p-16 bg-gradient-to-br from-purple-600 to-blue-600">
-        <h1 tw="text-white text-7xl font-bold mb-4">Universal Typography</h1>
-        <div tw="text-white text-3xl space-y-2">
-          <p>English: The quick brown fox</p>
-          <p>日本語: 早い茶色のキツネ</p>
-          <p>한국어: 빠른 갈색 여우</p>
-          <p>العربية: الثعلب البني السريع</p>
-          <p>ไทย: จิ้งจอกสีน้ำตาลที่รวดเร็ว</p>
-        </div>
-      </div>
-    </FontWrapper>
-  );
-}
-```
-
-### Importing Configuration
-
-Don't forget to import your configuration file in the API route:
-
-```typescript
-// src/pages/blog/[slug]/assets/[__image].[__type].ts
-import { apiImageEndpoint } from "@bearstudio/astro-assets-generation";
-import type { APIRoute } from "astro";
-import "@/lib/assets"; // ← Import to execute configuration
-
-export const prerender = false;
-
-export const GET: APIRoute = apiImageEndpoint(
-  import.meta.glob("./_*.tsx", { eager: true })
-);
-```
-
-## API Reference
-
-### `configure(config)`
-
-Configure the library with global settings.
-
-```typescript
-configure({
-  debugBackground: "#0a0a0a", // Background color for debug HTML view
-  siteUrl: "https://example.com", // Your site URL (for production)
-  isDev: true, // Whether running in development mode
-  customFonts: [
-    // Optional: custom fonts
-    {
-      name: "Geist",
-      url: "/fonts/Geist.ttf",
-      weight: 400,
-      style: "normal",
-    },
-  ],
-});
-```
-
-**Configuration Options:**
-
-- `debugBackground` (string): Background color for debug HTML view
-- `siteUrl` (string): Your site URL for production font/image fetching
-- `isDev` (boolean): Development mode flag
-- `customFonts` (FontConfig[]): Array of custom font configurations
-
-### `apiImageEndpoint(modules)`
-
-Creates an Astro API route handler that generates images from your templates.
-
-**Parameters:**
-
-- `modules`: A glob object from `import.meta.glob("./_*.tsx", { eager: true })`
-
-**Returns:** An `APIRoute` handler
-
-**URL Pattern:** `[__image].[__type]`
-
-- `__image`: The template name (filename without `_` prefix and `.tsx` extension)
-- `__type`: Either `png`, `jpg`, `jpeg`, or `debug`
-
-### `getAstroImageBase64(image)`
-
-Converts an Astro image object to a base64 data URI for use in templates.
-
-```typescript
-const base64 = await getAstroImageBase64(author.data.image);
-// Returns: "data:image/jpeg;base64, /9j/4AAQSkZJRg..."
-```
-
-### `extractEmoji(input)`
-
-Extracts emojis from a string and returns the cleaned text and emoji array.
-
-```typescript
-const { text, emojis } = extractEmoji("Hello World 🚀 🔥");
-// text: "Hello World"
-// emojis: ["🚀", "🔥"]
-```
-
-### `Emoji` Component
-
-React component to render emojis in your templates.
-
-```tsx
-<Emoji emoji="🚀" size={64} />
-```
-
-**Props:**
-
-- `emoji` (string): The emoji character to render
-- `size` (number, optional): Size in pixels (default: 4)
-
-### `FontWrapper` Component
-
-React component for managing fonts with automatic multilingual support.
-
-```tsx
-import { FontWrapper } from "@bearstudio/astro-assets-generation";
-
-<FontWrapper fontFamily="Geist" style={{ background: "white" }}>
-  <div>Content with multilingual support</div>
-</FontWrapper>;
-```
-
-**Props:**
-
-- `children` (ReactNode): Child components to wrap
-- `fontFamily` (string, optional): Primary font family name
-- `customFonts` (FontConfig[], optional): Override global custom fonts
-- `style` (React.CSSProperties, optional): Additional CSS styles
-
-**Features:**
-
-- Automatically creates a font stack with custom fonts + non-Latin fonts
-- Ensures proper rendering of Thai, Japanese, Korean, and Arabic characters
-- Falls back gracefully when primary font doesn't support certain characters
-
-### `getConfiguredFonts()`
-
-Returns the currently configured custom fonts.
-
-```typescript
-const fonts = getConfiguredFonts();
-// Returns: FontConfig[]
-```
-
-### `AssetImageConfig` Type
-
-Configuration object for image templates.
-
-```typescript
-interface AssetImageConfig {
-  width: number; // Image width in pixels
-  height: number; // Image height in pixels
-  debugScale?: number; // Optional scale for debug view (0-1)
-}
-```
-
-### `FontConfig` Type
-
-Configuration object for custom fonts.
-
-```typescript
-interface FontConfig {
-  name: string; // Font family name
-  url: string; // Path or URL to font file
-  weight: number; // Font weight (100-900)
-  style: "normal" | "italic"; // Font style
-}
-```
-
-**⚠️ Important:** The `name` must exactly match the internal font family name in the font file. Use a font inspector tool if you're unsure of the correct name.
-
-**URL formats:**
-
-- Web path: `/fonts/Font.ttf` (from `public/` directory)
-- HTTP(S): `https://example.com/fonts/Font.ttf`
-- Relative: `./fonts/Font.ttf` (package fonts)
-- Absolute: `/absolute/path/to/Font.ttf`
-
-## Styling
-
-Templates use [Tailwind CSS](https://tailwindcss.com/) via the `tw` prop. You can also use inline styles with the `style` prop.
-
-**Supported CSS features:**
-
-- Tailwind utility classes via `tw` prop
-- Inline styles via `style` prop
-- Flexbox and Grid layouts
-
-**Note:** Not all CSS features are supported. The library uses Takumi's image rendering engine, which has limitations compared to a full browser.
-
-## Astro Configuration
-
-Make sure your `astro.config.mjs` includes the necessary Vite optimizations:
+Update your `astro.config.mjs`:
 
 ```javascript
 import { defineConfig } from "astro/config";
@@ -416,7 +41,7 @@ export default defineConfig({
       noExternal: [
         "@takumi-rs/image-response",
         "@takumi-rs/core",
-        "@takumi-rs/helpers",Ò
+        "@takumi-rs/helpers",
         "@bearstudio/astro-assets-generation",
       ],
     },
@@ -425,9 +50,294 @@ export default defineConfig({
 });
 ```
 
-## Dependencies
+### 2. Configure the Library
 
-- `@takumi-rs/image-response`: Core image generation engine
-- `@twemoji/svg`: Emoji SVG assets
-- `ts-pattern`: Pattern matching utilities
-- `react` & `react-dom`: For React component rendering
+Create a configuration file (e.g., `src/lib/assets.ts`):
+
+```typescript
+import { configure } from "@bearstudio/astro-assets-generation";
+
+configure({
+  debugBackground: "#0a0a0a",
+  siteUrl: import.meta.env.SITE ?? "http://localhost:4321",
+  isDev: import.meta.env.DEV,
+  customFonts: [
+    // Optional
+    {
+      name: "Geist",
+      url: "/fonts/Geist.ttf",
+      weight: 400,
+      style: "normal",
+    },
+  ],
+});
+```
+
+### 3. Create a Template
+
+Create a React component prefixed with `_`:
+
+```tsx
+// src/pages/blog/[slug]/assets/_og-image.tsx
+import { FontWrapper } from "@bearstudio/astro-assets-generation";
+import type { AssetImageConfig } from "@bearstudio/astro-assets-generation";
+
+export const config: AssetImageConfig = {
+  width: 1200,
+  height: 630,
+  debugScale: 0.5, // Optional: for debug view
+};
+
+export default function OgImage({ params }: { params: { slug: string } }) {
+  return (
+    <FontWrapper fontFamily="Geist">
+      <div tw="flex flex-col w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 p-16">
+        <h1 tw="text-white text-7xl font-bold">My Blog Post</h1>
+        <p tw="text-white text-2xl">Post: {params.slug}</p>
+      </div>
+    </FontWrapper>
+  );
+}
+```
+
+### 4. Create API Route
+
+```typescript
+// src/pages/blog/[slug]/assets/[__image].[__type].ts
+import { apiImageEndpoint } from "@bearstudio/astro-assets-generation";
+import type { APIRoute } from "astro";
+import "@/lib/assets"; // Import your config
+
+export const prerender = false;
+
+export const GET: APIRoute = apiImageEndpoint(
+  import.meta.glob("./_*.tsx", { eager: true })
+);
+```
+
+### 5. Access Your Images
+
+- **PNG**: `/blog/my-post/assets/og-image.png`
+- **JPEG**: `/blog/my-post/assets/og-image.jpg`
+- **Debug**: `/blog/my-post/assets/og-image.debug`
+
+## Font Management
+
+### Built-in Fonts
+
+The library automatically includes fonts for Thai, Japanese, Korean, and Arabic. These are used as fallbacks.
+
+### Custom Fonts
+
+Add fonts in your configuration:
+
+```typescript
+const customFonts: FontConfig[] = [
+  {
+    name: "Geist", // Must match font's internal name
+    url: "/fonts/Geist.ttf", // Path or URL
+    weight: 400,
+    style: "normal",
+  },
+];
+```
+
+### FontWrapper Component
+
+Automatically creates a font stack with fallbacks:
+
+```tsx
+import { FontWrapper } from "@bearstudio/astro-assets-generation";
+
+<FontWrapper fontFamily="Geist">
+  <div tw="p-16">
+    <p>English, 日本語, 한국어, العربية, ไทย - all supported!</p>
+  </div>
+</FontWrapper>;
+```
+
+## Emoji Support
+
+```tsx
+import { Emoji, extractEmoji } from "@bearstudio/astro-assets-generation";
+
+const { text, emojis } = extractEmoji("Hello 🚀 World 🔥");
+// text: "Hello World"
+// emojis: ["🚀", "🔥"]
+
+<div tw="flex items-center gap-2">
+  <h1>{text}</h1>
+  {emojis.map((emoji, i) => (
+    <Emoji key={i} emoji={emoji} size={64} />
+  ))}
+</div>;
+```
+
+## Styling
+
+Use Tailwind CSS via the `tw` prop or inline styles:
+
+```tsx
+<div tw="flex items-center justify-center w-full h-full bg-blue-500">
+  <h1 tw="text-white text-8xl font-bold">Hello</h1>
+</div>
+```
+
+## Working with Images
+
+### Astro Images
+
+```tsx
+import { getAstroImageBase64 } from "@bearstudio/astro-assets-generation";
+
+const avatarBase64 = await getAstroImageBase64(author.data.avatar);
+
+<img src={avatarBase64} tw="w-32 h-32 rounded-full" />;
+```
+
+### External Images
+
+```tsx
+<img src="https://example.com/image.jpg" tw="w-64 h-64" />
+```
+
+## API Reference
+
+### Functions
+
+#### `configure(config)`
+
+```typescript
+configure({
+  debugBackground: "#0a0a0a",
+  siteUrl: "https://example.com",
+  isDev: import.meta.env.DEV,
+  customFonts: [
+    /* ... */
+  ],
+});
+```
+
+#### `apiImageEndpoint(modules)`
+
+Creates an Astro API route handler:
+
+```typescript
+export const GET = apiImageEndpoint(
+  import.meta.glob("./_*.tsx", { eager: true })
+);
+```
+
+#### `getAstroImageBase64(image)`
+
+Converts Astro image to base64 data URI.
+
+#### `extractEmoji(input)`
+
+Extracts emojis from text:
+
+```typescript
+const { text, emojis } = extractEmoji("Hello 🚀");
+```
+
+### Components
+
+#### `<Emoji emoji="🚀" size={64} />`
+
+Renders emojis using Twemoji SVGs.
+
+#### `<FontWrapper fontFamily="Geist">`
+
+Wraps content with automatic font fallback support.
+
+### Types
+
+#### `AssetImageConfig`
+
+```typescript
+interface AssetImageConfig {
+  width: number;
+  height: number;
+  debugScale?: number; // Default: 0.5
+}
+```
+
+#### `FontConfig`
+
+```typescript
+interface FontConfig {
+  name: string;
+  url: string;
+  weight: number;
+  style: "normal" | "italic";
+}
+```
+
+## Troubleshooting
+
+**Images not generating?**
+
+- Verify template starts with `_` (e.g., `_og-image.tsx`)
+- Check API route uses `[__image].[__type].ts` (double underscores)
+- Ensure `prerender = false` in API route
+- Import config file in API route
+
+**Fonts not loading?**
+
+- Verify font name matches internal font name
+- Check `siteUrl` is correct in production
+- Ensure fonts are accessible from production URL
+
+**Styling issues?**
+
+- Use `tw` prop, not `className`
+- Test in debug mode (`.debug` extension)
+- Stick to well-supported CSS features
+
+## Example: Blog OG Image
+
+```tsx
+// src/pages/blog/[slug]/assets/_og-image.tsx
+import {
+  FontWrapper,
+  Emoji,
+  extractEmoji,
+} from "@bearstudio/astro-assets-generation";
+import { getEntry } from "astro:content";
+
+export const config = { width: 1200, height: 630 };
+
+export default async function BlogOgImage({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const post = await getEntry("blog", params.slug);
+  const { text: title, emojis } = extractEmoji(post.data.title);
+
+  return (
+    <FontWrapper fontFamily="Geist" style={{ width: "100%", height: "100%" }}>
+      <div tw="flex flex-col w-full h-full bg-gradient-to-br from-blue-600 to-purple-700 p-16">
+        <div tw="flex items-center mb-auto">
+          <h1 tw="text-white text-7xl font-bold">
+            {title}
+            {emojis.map((emoji, i) => (
+              <Emoji key={i} emoji={emoji} size={72} />
+            ))}
+          </h1>
+        </div>
+        <div tw="flex items-center justify-between">
+          <p tw="text-white text-2xl">{post.data.author}</p>
+          <p tw="text-white text-2xl">
+            {new Date(post.data.date).toLocaleDateString()}
+          </p>
+        </div>
+      </div>
+    </FontWrapper>
+  );
+}
+```
+
+## License
+
+MIT
