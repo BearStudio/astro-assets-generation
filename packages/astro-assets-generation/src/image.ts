@@ -70,13 +70,13 @@ async function loadFontData(font: FontConfig): Promise<Buffer> {
         const publicFontPath = path.resolve(
           process.cwd(),
           "public",
-          publicPath
+          publicPath,
         );
         try {
           return await fs.readFile(publicFontPath);
         } catch {
           throw new Error(
-            `Failed to load font ${font.name} from ${publicFontPath}`
+            `Failed to load font ${font.name} from ${publicFontPath}`,
           );
         }
       })
@@ -120,7 +120,7 @@ async function loadFontData(font: FontConfig): Promise<Buffer> {
         } catch (err) {
           if (libraryConfig.isDev) {
             console.warn(
-              `[astro-assets-generation] Font "${font.name}" not found at ${fontPath}, trying next location...`
+              `[astro-assets-generation] Font "${font.name}" not found at ${fontPath}, trying next location...`,
             );
           }
           continue;
@@ -135,7 +135,7 @@ async function loadFontData(font: FontConfig): Promise<Buffer> {
       } catch {
         throw new Error(
           `Failed to load font ${font.name} from ${font.url}. ` +
-            `Tried: ${possiblePaths.join(", ")} and ${publicFontPath}`
+            `Tried: ${possiblePaths.join(", ")} and ${publicFontPath}`,
         );
       }
     })
@@ -160,7 +160,7 @@ async function loadFontData(font: FontConfig): Promise<Buffer> {
         } catch (err) {
           if (libraryConfig.isDev) {
             console.warn(
-              `[astro-assets-generation] Font "${font.name}" not found at ${fontPath}, trying next location...`
+              `[astro-assets-generation] Font "${font.name}" not found at ${fontPath}, trying next location...`,
             );
           }
           continue;
@@ -176,7 +176,7 @@ async function loadFontData(font: FontConfig): Promise<Buffer> {
       if (!res.ok) {
         throw new Error(
           `Failed to fetch font: ${url}. ` +
-            `Also tried local paths: ${possiblePaths.join(", ")}`
+            `Also tried local paths: ${possiblePaths.join(", ")}`,
         );
       }
       return Buffer.from(await res.arrayBuffer());
@@ -212,7 +212,7 @@ async function loadFonts(): Promise<
         style: font.style,
         data: arrayBuffer,
       };
-    })
+    }),
   );
 }
 
@@ -249,7 +249,7 @@ export async function JPEG(component: JSX.Element, config: AssetImageConfig) {
 
 export async function DEBUG_HTML(
   component: JSX.Element,
-  config: AssetImageConfig
+  config: AssetImageConfig,
 ): Promise<string> {
   const scale = config.debugScale ?? 0.5;
   const html = renderToStaticMarkup(component);
@@ -272,7 +272,7 @@ export async function DEBUG_HTML(
               font.url.endsWith(".ttf") ? "truetype" : "woff"
             }");
           }
-        `
+        `,
         )
         .join("\n")}
         :root {
@@ -327,7 +327,7 @@ export function generateImageResponsePNG(buffer: ArrayBuffer) {
   return new Response(buffer, {
     headers: {
       "Content-Type": "image/png",
-      "Cache-Control": "public, max-age=31536000, immutable",
+      // "Cache-Control": "public, max-age=31536000, immutable",
     },
   });
 }
@@ -336,7 +336,7 @@ export function generateImageResponseJPEG(buffer: ArrayBuffer) {
   return new Response(buffer, {
     headers: {
       "Content-Type": "image/jpeg",
-      "Cache-Control": "public, max-age=31536000, immutable",
+      // "Cache-Control": "public, max-age=31536000, immutable",
     },
   });
 }
@@ -381,7 +381,7 @@ async function getAstroImageBuffer(image: { src: string }) {
 
         return Buffer.from(await res.arrayBuffer());
       })
-      .run(),
+      .exhaustive(),
     fileType: match(fileExtension)
       .with("jpg", "jpeg", () => "jpeg")
       .with("png", () => "png")
