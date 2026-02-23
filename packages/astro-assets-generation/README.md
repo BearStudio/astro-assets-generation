@@ -91,7 +91,12 @@ export const config: AssetImageConfig = {
 export default function OgImage({ params }: { params: { slug: string } }) {
   return (
     <FontWrapper fontFamily="Geist">
-      <div tw="flex flex-col w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 p-16">
+      <div
+        tw="flex flex-col w-full h-full p-16"
+        style={{
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        }}
+      >
         <h1 tw="text-white text-7xl font-bold">My Blog Post</h1>
         <p tw="text-white text-2xl">Post: {params.slug}</p>
       </div>
@@ -317,7 +322,12 @@ export default async function BlogOgImage({
 
   return (
     <FontWrapper fontFamily="Geist" style={{ width: "100%", height: "100%" }}>
-      <div tw="flex flex-col w-full h-full bg-gradient-to-br from-blue-600 to-purple-700 p-16">
+      <div
+        tw="flex flex-col w-full h-full p-16"
+        style={{
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        }}
+      >
         <div tw="flex items-center mb-auto">
           <h1 tw="text-white text-7xl font-bold">
             {title}
