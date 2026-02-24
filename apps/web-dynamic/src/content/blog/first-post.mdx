@@ -1,0 +1,72 @@
+---
+title: "Getting Started with astro-assets-generation 🚀"
+description: "Learn how to generate beautiful Open Graph images and other assets for your Astro site using JSX and Tailwind."
+date: 2024-01-20
+author: john-doe
+tags: ["astro", "og-images", "getting-started"]
+---
+
+# Getting Started with astro-assets-generation
+
+`@bearstudio/astro-assets-generation` lets you generate images (OG images, social cards, banners…) using JSX + Tailwind-like syntax directly in your Astro project.
+
+## Setup
+
+Configure the library once in your `src/lib/assets.ts`:
+
+```ts
+import { configure } from "@bearstudio/astro-assets-generation";
+
+configure({
+  siteUrl: import.meta.env.SITE,
+  isDev: import.meta.env.DEV,
+  customFonts: [
+    { name: "Geist", url: "/fonts/Geist.ttf", weight: 400, style: "normal" },
+  ],
+});
+```
+
+## Create your first asset
+
+Add a `_og.tsx` file next to your API route:
+
+```tsx
+import { FontWrapper } from "@bearstudio/astro-assets-generation";
+import type { AssetImageConfig } from "@bearstudio/astro-assets-generation";
+
+export const config: AssetImageConfig = { width: 1200, height: 630 };
+
+export default function OgImage({ params }: { params: { slug: string } }) {
+  return (
+    <FontWrapper fontFamily="Geist">
+      <div
+        tw="flex flex-col w-full h-full p-16"
+        style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}
+      >
+        <h1 tw="text-white text-7xl font-bold">{params.slug}</h1>
+      </div>
+    </FontWrapper>
+  );
+}
+```
+
+## Wire up the endpoint
+
+Create `[__image].[__type].ts` alongside your asset files:
+
+```ts
+import { apiImageEndpoint, getStaticPathsForAssets } from "@bearstudio/astro-assets-generation";
+import { getCollection } from "astro:content";
+import "@/lib/assets";
+
+const modules = import.meta.glob("./_*.tsx", { eager: true });
+
+export const getStaticPaths = async () => {
+  const posts = await getCollection("blog");
+  return getStaticPathsForAssets(modules, posts.map((p) => ({ slug: p.id })));
+};
+
+export const GET = apiImageEndpoint(modules);
+```
+
+The image is now available at `/blog/[slug]/assets/og.png`.

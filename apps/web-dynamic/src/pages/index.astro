@@ -1,0 +1,52 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+
+const posts = await getCollection("blog");
+---
+
+<Layout>
+  <div class="max-w-5xl mx-auto px-4 py-8">
+    <div class="mb-10 p-6 rounded-xl bg-gradient-to-r from-slate-800 to-indigo-900 text-white">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="text-xs font-semibold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">
+          Dynamic / SSR
+        </span>
+      </div>
+      <h1 class="text-3xl font-bold mb-2">astro-assets-generation — Dynamic example</h1>
+      <p class="text-white/80 text-lg">
+        All OG images are generated on-demand using <code class="bg-white/20 px-1 rounded">prerender: false</code>.
+        Open any post to see the generated image.
+      </p>
+    </div>
+
+    <h2 class="text-2xl font-semibold mb-6 text-gray-800">Blog Posts</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {
+        posts.map((post) => (
+          <a
+            href={`/blog/${post.id}`}
+            class="block p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow border border-gray-200"
+          >
+            <h2 class="text-xl font-semibold mb-2">{post.data.title}</h2>
+            {post.data.description && (
+              <p class="text-gray-600 mb-4 line-clamp-3">
+                {post.data.description}
+              </p>
+            )}
+            {post.data.tags && (
+              <div class="flex flex-wrap gap-2">
+                {post.data.tags.slice(0, 3).map((tag: string) => (
+                  <span class="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,56 @@
+---
+title: "Custom Fonts and Emoji Support 🎨"
+description: "Use custom fonts and emoji in your generated images with full Unicode support across languages."
+date: 2024-01-22
+author: john-doe
+tags: ["fonts", "emoji", "customization"]
+---
+
+# Custom Fonts and Emoji Support
+
+One of the key features of `astro-assets-generation` is first-class support for custom fonts and emoji rendering.
+
+## Loading Custom Fonts
+
+Register fonts in your `configure()` call:
+
+```ts
+configure({
+  customFonts: [
+    { name: "Geist", url: "/fonts/Geist.ttf", weight: 400, style: "normal" },
+    { name: "Geist", url: "/fonts/Geist-Bold.ttf", weight: 700, style: "normal" },
+    { name: "GravitasOne", url: "/fonts/GravitasOne-Regular.ttf", weight: 400, style: "normal" },
+  ],
+});
+```
+
+Then use them via `FontWrapper`:
+
+```tsx
+<FontWrapper fontFamily="GravitasOne">
+  <h1 tw="text-white text-8xl">Bold Headline</h1>
+</FontWrapper>
+```
+
+## Emoji Support
+
+Use the `Emoji` component for crisp emoji rendering at any size:
+
+```tsx
+import { Emoji, extractEmoji } from "@bearstudio/astro-assets-generation";
+
+const { text, emojis } = extractEmoji("Hello World 🌍");
+
+return (
+  <h1>
+    <span>{text}</span>
+    {emojis.map((e, i) => <Emoji key={i} emoji={e} size={64} />)}
+  </h1>
+);
+```
+
+`extractEmoji` separates text from emoji so you can render each with the correct font and size — no more missing glyphs.
+
+## Unicode Support
+
+The library supports multi-language text out of the box. Arabic, Japanese, Thai, Korean, Greek — just make sure the font you load covers the characters you need.
