@@ -109,15 +109,25 @@ export default function OgImage({ params }: { params: { slug: string } }) {
 
 ```typescript
 // src/pages/blog/[slug]/assets/[__image].[__type].ts
-import { apiImageEndpoint } from "@bearstudio/astro-assets-generation";
+import {
+  apiImageEndpoint,
+  getStaticPathsForAssets,
+} from "@bearstudio/astro-assets-generation";
 import type { APIRoute } from "astro";
+import { getCollection } from "astro:content";
 import "@/lib/assets"; // Import your config
 
-export const prerender = false;
+const modules = import.meta.glob("./_*.tsx", { eager: true });
 
-export const GET: APIRoute = apiImageEndpoint(
-  import.meta.glob("./_*.tsx", { eager: true })
-);
+export const getStaticPaths = async () => {
+  const posts = await getCollection("blog");
+  return getStaticPathsForAssets(
+    modules,
+    posts.map((post) => ({ slug: post.id }))
+  );
+};
+
+export const GET: APIRoute = apiImageEndpoint(modules);
 ```
 
 ### 5. Access Your Images
@@ -125,6 +135,67 @@ export const GET: APIRoute = apiImageEndpoint(
 - **PNG**: `/blog/my-post/assets/og-image.png`
 - **JPEG**: `/blog/my-post/assets/og-image.jpg`
 - **Debug**: `/blog/my-post/assets/og-image.debug`
+
+## Using Dynamic Routes (with an Adapter)
+
+By default, the examples above use `getStaticPaths` to pre-generate images at build time — no server adapter required.
+
+If you need to generate images on-demand (e.g., for a very large number of routes or frequently changing content), you can use `prerender = false` instead. This requires an [Astro server adapter](https://docs.astro.build/en/guides/server-side-rendering/).
+
+### Install an adapter
+
+```bash
+pnpm astro add vercel
+# or
+pnpm astro add node
+```
+
+### Update `astro.config.mjs`
+
+```javascript
+import { defineConfig } from "astro/config";
+import react from "@astrojs/react";
+import vercel from "@astrojs/vercel";
+
+export default defineConfig({
+  vite: {
+    optimizeDeps: {
+      exclude: [
+        "@takumi-rs/image-response",
+        "@takumi-rs/core",
+        "@takumi-rs/helpers",
+      ],
+    },
+    ssr: {
+      noExternal: [
+        "@takumi-rs/image-response",
+        "@takumi-rs/core",
+        "@takumi-rs/helpers",
+        "@bearstudio/astro-assets-generation",
+      ],
+    },
+  },
+  integrations: [react()],
+  adapter: vercel(),
+});
+```
+
+### Update API Route
+
+Replace `getStaticPaths` with `prerender = false`:
+
+```typescript
+// src/pages/blog/[slug]/assets/[__image].[__type].ts
+import { apiImageEndpoint } from "@bearstudio/astro-assets-generation";
+import type { APIRoute } from "astro";
+import "@/lib/assets";
+
+export const prerender = false;
+
+export const GET: APIRoute = apiImageEndpoint(
+  import.meta.glob("./_*.tsx", { eager: true })
+);
+```
 
 ## Font Management
 
@@ -233,6 +304,23 @@ export const GET = apiImageEndpoint(
 );
 ```
 
+#### `getStaticPathsForAssets(modules, parentParams, imageTypes?)`
+
+Generates static paths for all combinations of templates and image types. Automatically derives template names from the glob modules.
+
+```typescript
+const modules = import.meta.glob("./_*.tsx", { eager: true });
+
+export const getStaticPaths = async () => {
+  const posts = await getCollection("blog");
+  return getStaticPathsForAssets(
+    modules,
+    posts.map((post) => ({ slug: post.id }))
+    // optional 3rd arg: ["png", "jpg"] by default
+  );
+};
+```
+
 #### `getAstroImageBase64(image)`
 
 Converts Astro image to base64 data URI.
@@ -284,7 +372,6 @@ interface FontConfig {
 
 - Verify template starts with `_` (e.g., `_og-image.tsx`)
 - Check API route uses `[__image].[__type].ts` (double underscores)
-- Ensure `prerender = false` in API route
 - Import config file in API route
 
 **Fonts not loading?**
