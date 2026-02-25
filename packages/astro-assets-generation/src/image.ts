@@ -68,7 +68,9 @@ async function loadFontData(font: FontConfig): Promise<Buffer> {
     const relativePath = font.url.replace(/^\//, "");
     for (const dir of ["public", "dist"]) {
       try {
-        return await fs.readFile(path.resolve(process.cwd(), dir, relativePath));
+        return await fs.readFile(
+          path.resolve(process.cwd(), dir, relativePath)
+        );
       } catch {
         continue;
       }
@@ -94,8 +96,16 @@ async function loadFontData(font: FontConfig): Promise<Buffer> {
   const possiblePaths = [
     path.resolve(currentDir, "./fonts", fontFileName),
     path.resolve(currentDir, "../src/fonts", fontFileName),
-    path.resolve(process.cwd(), "node_modules/@bearstudio/astro-assets-generation/dist/fonts", fontFileName),
-    path.resolve(process.cwd(), "node_modules/@bearstudio/astro-assets-generation/src/fonts", fontFileName),
+    path.resolve(
+      process.cwd(),
+      "node_modules/@bearstudio/astro-assets-generation/dist/fonts",
+      fontFileName
+    ),
+    path.resolve(
+      process.cwd(),
+      "node_modules/@bearstudio/astro-assets-generation/src/fonts",
+      fontFileName
+    ),
   ];
   for (const fontPath of possiblePaths) {
     try {
@@ -185,19 +195,44 @@ export async function DEBUG_HTML(
   const html = renderToStaticMarkup(component);
   const allFonts = getAllFonts(libraryConfig.customFonts);
 
+  // Resolve font URLs for the browser:
+  // - custom fonts starting with "/" are absolute from root → keep as-is
+  // - built-in fonts with relative paths (./fonts/...) → resolve via siteUrl
+  const resolvedFonts = allFonts.map((font) => {
+    let url = font.url;
+    if (
+      !url.startsWith("http://") &&
+      !url.startsWith("https://") &&
+      !url.startsWith("/")
+    ) {
+      const fontFileName = path.basename(url);
+      url = `${libraryConfig.siteUrl}/fonts/${fontFileName}`;
+    }
+    return { ...font, url };
+  });
+
   return `<!DOCTYPE html>
   <html>
     <head>
       <title>Debug OG Image</title>
       <script src="https://cdn.tailwindcss.com"></script>
+      ${resolvedFonts
+        .map(
+          (font) =>
+            `<link rel="preload" href="${font.url}" as="font" type="font/${
+              font.url.endsWith(".ttf") ? "truetype" : "woff2"
+            }" crossorigin>`
+        )
+        .join("\n      ")}
       <style>
-      ${allFonts
+      ${resolvedFonts
         .map(
           (font) => `
           @font-face {
             font-family: "${font.name}";
             font-style: ${font.style};
             font-weight: ${font.weight};
+            font-display: block;
             src: url("${font.url}") format("${
               font.url.endsWith(".ttf") ? "truetype" : "woff"
             }");
@@ -307,7 +342,7 @@ async function getAstroImageBuffer(image: { src: string }) {
         const distPath = path.resolve(
           process.cwd(),
           "dist",
-          fileToRead.replace(/^\//, ""),
+          fileToRead.replace(/^\//, "")
         );
         try {
           return await fs.readFile(distPath);
