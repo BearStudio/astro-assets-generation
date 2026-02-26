@@ -123,7 +123,7 @@ export const getStaticPaths = async () => {
   const posts = await getCollection("blog");
   return getStaticPathsForAssets(
     modules,
-    posts.map((post) => ({ slug: post.id }))
+    posts.map((post) => ({ slug: post.id })),
   );
 };
 
@@ -193,7 +193,7 @@ import "@/lib/assets";
 export const prerender = false;
 
 export const GET: APIRoute = apiImageEndpoint(
-  import.meta.glob("./_*.tsx", { eager: true })
+  import.meta.glob("./_*.tsx", { eager: true }),
 );
 ```
 
@@ -300,7 +300,7 @@ Creates an Astro API route handler:
 
 ```typescript
 export const GET = apiImageEndpoint(
-  import.meta.glob("./_*.tsx", { eager: true })
+  import.meta.glob("./_*.tsx", { eager: true }),
 );
 ```
 
@@ -315,7 +315,7 @@ export const getStaticPaths = async () => {
   const posts = await getCollection("blog");
   return getStaticPathsForAssets(
     modules,
-    posts.map((post) => ({ slug: post.id }))
+    posts.map((post) => ({ slug: post.id })),
     // optional 3rd arg: ["png", "jpg"] by default
   );
 };
