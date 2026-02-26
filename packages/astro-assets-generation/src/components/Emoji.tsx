@@ -6,6 +6,20 @@ export function Emoji({ emoji, size = 4 }: { emoji: string; size?: number }) {
   if (!src) return null;
 
   return (
-    <img src={src} width={size} height={size} style={{ display: "inline" }} />
+    <img
+      src={src}
+      width={size}
+      height={size}
+      style={{
+        display: "inline",
+        width: size,
+        height: size,
+        minWidth: size,
+        minHeight: size,
+        maxWidth: size,
+        maxHeight: size,
+        flexShrink: 0,
+      }}
+    />
   );
 }

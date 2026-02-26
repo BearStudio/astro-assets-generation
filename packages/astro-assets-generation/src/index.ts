@@ -6,6 +6,7 @@ import {
   generateImageResponseHTML,
   generateImageResponsePNG,
   generateImageResponseJPEG,
+  getImageNameFromTsxPath,
 } from "./image";
 
 export class NotFoundAssetError extends Error {
@@ -76,6 +77,24 @@ export const apiImageEndpoint: (modules: Record<string, unknown>) => APIRoute =
       });
     }
   };
+
+export function getStaticPathsForAssets(
+  modules: Record<string, unknown>,
+  parentParams: Array<Record<string, string>>,
+  imageTypes: string[] = ["png", "jpg"]
+) {
+  const imageNames = Object.keys(modules)
+    .map((key) => getImageNameFromTsxPath(key))
+    .filter((name): name is string => name !== undefined);
+
+  return parentParams.flatMap((params) =>
+    imageNames.flatMap((image) =>
+      imageTypes.map((type) => ({
+        params: { ...params, __image: image, __type: type },
+      }))
+    )
+  );
+}
 
 export { getAstroImageBase64, configure, getConfiguredFonts } from "./image";
 export { extractEmoji } from "./emoji";

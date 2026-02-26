@@ -1,0 +1,57 @@
+---
+title: "Static vs Dynamic Asset Generation ⚡"
+description: "Choose the right approach for your project: pre-generate assets at build time or generate them on-demand with SSR."
+date: 2024-01-25
+author: john-doe
+tags: ["static", "dynamic", "performance", "seo"]
+---
+
+# Static vs Dynamic Asset Generation
+
+`astro-assets-generation` supports both static (build-time) and dynamic (on-demand) image generation. Choosing the right approach depends on your deployment target and content update frequency.
+
+## Static Generation (this app)
+
+Use `getStaticPathsForAssets` to pre-generate all images during `astro build`:
+
+```ts
+export const getStaticPaths = async () => {
+  const posts = await getCollection("blog");
+  return getStaticPathsForAssets(
+    modules,
+    posts.map((p) => ({ slug: p.id }))
+  );
+};
+
+export const GET = apiImageEndpoint(modules);
+```
+
+**Pros:** Zero latency, works with any static host (Netlify, GitHub Pages, S3…).
+**Cons:** Images are only updated on the next build.
+
+## Dynamic Generation (SSR)
+
+Disable prerendering to generate images on every request:
+
+```ts
+export const prerender = false;
+
+export const GET: APIRoute = apiImageEndpoint(
+  import.meta.glob("./_*.tsx", { eager: true })
+);
+```
+
+**Pros:** Always up-to-date, can use request-time data.
+**Cons:** Requires a server-side runtime (Node.js, Vercel, Cloudflare…).
+
+## When to use which?
+
+| | Static | Dynamic |
+|---|---|---|
+| Deploy target | Any host | Server required |
+| Content updates | Needs rebuild | Instant |
+| Latency | None | Small overhead |
+| Dynamic data | No | Yes |
+
+For most blog sites, **static generation** is the better choice.
+For user-generated content or dashboards, use **dynamic generation**.

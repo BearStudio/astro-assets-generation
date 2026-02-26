@@ -61,35 +61,26 @@ async function loadFontData(font: FontConfig): Promise<Buffer> {
     return Buffer.from(await res.arrayBuffer());
   }
 
-  // If URL starts with "/" (web path), handle as public directory path
+  // If URL starts with "/" (web path), handle as public directory path.
+  // Always try filesystem first (works in dev, build, and SSR runtime),
+  // then fall back to HTTP (SSR runtime when files aren't on disk).
   if (font.url.startsWith("/")) {
-    return await match(libraryConfig.isDev)
-      .with(true, async () => {
-        // In dev mode, read from public directory
-        const publicPath = font.url.replace(/^\//, "");
-        const publicFontPath = path.resolve(
-          process.cwd(),
-          "public",
-          publicPath,
+    const relativePath = font.url.replace(/^\//, "");
+    for (const dir of ["public", "dist"]) {
+      try {
+        return await fs.readFile(
+          path.resolve(process.cwd(), dir, relativePath)
         );
-        try {
-          return await fs.readFile(publicFontPath);
-        } catch {
-          throw new Error(
-            `Failed to load font ${font.name} from ${publicFontPath}`,
-          );
-        }
-      })
-      .with(false, async () => {
-        // In production, fetch from site URL
-        const url = new URL(font.url, libraryConfig.siteUrl);
-        const res = await fetch(url);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch font: ${url}`);
-        }
-        return Buffer.from(await res.arrayBuffer());
-      })
-      .run();
+      } catch {
+        continue;
+      }
+    }
+    const url = new URL(font.url, libraryConfig.siteUrl);
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch font ${font.name}: ${url}`);
+    }
+    return Buffer.from(await res.arrayBuffer());
   }
 
   // If URL is an absolute file system path (not starting with /), read it directly
@@ -97,91 +88,40 @@ async function loadFontData(font: FontConfig): Promise<Buffer> {
     return await fs.readFile(font.url);
   }
 
-  // For relative paths (like "./fonts/NotoSansThai-Regular.ttf"), handle dev vs production
-  return await match(libraryConfig.isDev)
-    .with(true, async () => {
-      // In dev mode, fonts are in the package's fonts directory
-      const fontFileName = path.basename(font.url);
-      const currentFile = fileURLToPath(import.meta.url);
-      const currentDir = path.dirname(currentFile);
-
-      // Try multiple possible locations for package fonts
-      const possiblePaths = [
-        // Direct fonts directory (if in dist)
-        path.resolve(currentDir, "./fonts", fontFileName),
-        // Source fonts directory
-        path.resolve(currentDir, "../src/fonts", fontFileName),
-      ];
-
-      // Try each path
-      for (const fontPath of possiblePaths) {
-        try {
-          return await fs.readFile(fontPath);
-        } catch (err) {
-          if (libraryConfig.isDev) {
-            console.warn(
-              `[astro-assets-generation] Font "${font.name}" not found at ${fontPath}, trying next location...`,
-            );
-          }
-          continue;
-        }
-      }
-
-      // If not found in package, try public directory (for user-provided fonts)
-      const publicPath = font.url.replace(/^\.\/fonts\//, "");
-      const publicFontPath = path.resolve(process.cwd(), "public", publicPath);
-      try {
-        return await fs.readFile(publicFontPath);
-      } catch {
-        throw new Error(
-          `Failed to load font ${font.name} from ${font.url}. ` +
-            `Tried: ${possiblePaths.join(", ")} and ${publicFontPath}`,
-        );
-      }
-    })
-    .with(false, async () => {
-      // In production, try to load from package first, then fetch from site URL
-      const fontFileName = path.basename(font.url);
-      const currentFile = fileURLToPath(import.meta.url);
-      const currentDir = path.dirname(currentFile);
-
-      // Try multiple possible locations for package fonts
-      const possiblePaths = [
-        // Direct fonts directory (if in dist)
-        path.resolve(currentDir, "./fonts", fontFileName),
-        // Source fonts directory
-        path.resolve(currentDir, "../src/fonts", fontFileName),
-      ];
-
-      // Try each path
-      for (const fontPath of possiblePaths) {
-        try {
-          return await fs.readFile(fontPath);
-        } catch (err) {
-          if (libraryConfig.isDev) {
-            console.warn(
-              `[astro-assets-generation] Font "${font.name}" not found at ${fontPath}, trying next location...`,
-            );
-          }
-          continue;
-        }
-      }
-
-      // If not found locally, fetch from site URL
-      const fontUrl = font.url.startsWith("/")
-        ? font.url
-        : `/fonts/${fontFileName}`;
-      const url = new URL(fontUrl, libraryConfig.siteUrl);
-      const res = await fetch(url);
-      if (!res.ok) {
-        throw new Error(
-          `Failed to fetch font: ${url}. ` +
-            `Also tried local paths: ${possiblePaths.join(", ")}`,
-        );
-      }
-      return Buffer.from(await res.arrayBuffer());
-    })
-    .run();
+  // For relative paths (built-in package fonts like "./fonts/NotoSansThai-Regular.ttf").
+  // Always try filesystem in order: relative to this file, then via node_modules
+  // (needed when bundled with noExternal), then HTTP as last resort.
+  const fontFileName = path.basename(font.url);
+  const currentDir = path.dirname(fileURLToPath(import.meta.url));
+  const possiblePaths = [
+    path.resolve(currentDir, "./fonts", fontFileName),
+    path.resolve(currentDir, "../src/fonts", fontFileName),
+    path.resolve(
+      process.cwd(),
+      "node_modules/@bearstudio/astro-assets-generation/dist/fonts",
+      fontFileName
+    ),
+    path.resolve(
+      process.cwd(),
+      "node_modules/@bearstudio/astro-assets-generation/src/fonts",
+      fontFileName
+    ),
+  ];
+  for (const fontPath of possiblePaths) {
+    try {
+      return await fs.readFile(fontPath);
+    } catch {
+      continue;
+    }
+  }
+  const url = new URL(`/fonts/${fontFileName}`, libraryConfig.siteUrl);
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(
+      `Failed to load built-in font ${font.name}. Tried: ${possiblePaths.join(", ")}`
+    );
+  }
+  return Buffer.from(await res.arrayBuffer());
 }
 
 let fontsCache: Array<{
@@ -212,7 +152,7 @@ async function loadFonts(): Promise<
         style: font.style,
         data: arrayBuffer,
       };
-    }),
+    })
   );
 }
 
@@ -249,30 +189,55 @@ export async function JPEG(component: JSX.Element, config: AssetImageConfig) {
 
 export async function DEBUG_HTML(
   component: JSX.Element,
-  config: AssetImageConfig,
+  config: AssetImageConfig
 ): Promise<string> {
   const scale = config.debugScale ?? 0.5;
   const html = renderToStaticMarkup(component);
   const allFonts = getAllFonts(libraryConfig.customFonts);
+
+  // Resolve font URLs for the browser:
+  // - custom fonts starting with "/" are absolute from root → keep as-is
+  // - built-in fonts with relative paths (./fonts/...) → resolve via siteUrl
+  const resolvedFonts = allFonts.map((font) => {
+    let url = font.url;
+    if (
+      !url.startsWith("http://") &&
+      !url.startsWith("https://") &&
+      !url.startsWith("/")
+    ) {
+      const fontFileName = path.basename(url);
+      url = `${libraryConfig.siteUrl}/fonts/${fontFileName}`;
+    }
+    return { ...font, url };
+  });
 
   return `<!DOCTYPE html>
   <html>
     <head>
       <title>Debug OG Image</title>
       <script src="https://cdn.tailwindcss.com"></script>
+      ${resolvedFonts
+        .map(
+          (font) =>
+            `<link rel="preload" href="${font.url}" as="font" type="font/${
+              font.url.endsWith(".ttf") ? "truetype" : "woff2"
+            }" crossorigin>`
+        )
+        .join("\n      ")}
       <style>
-      ${allFonts
+      ${resolvedFonts
         .map(
           (font) => `
           @font-face {
             font-family: "${font.name}";
             font-style: ${font.style};
             font-weight: ${font.weight};
+            font-display: block;
             src: url("${font.url}") format("${
               font.url.endsWith(".ttf") ? "truetype" : "woff"
             }");
           }
-        `,
+        `
         )
         .join("\n")}
         :root {
@@ -373,6 +338,17 @@ async function getAstroImageBuffer(image: { src: string }) {
     buffer: await match(libraryConfig.isDev)
       .with(true, async () => await fs.readFile(fileToRead))
       .with(false, async () => {
+        // Try reading from dist directory first (build-time static generation)
+        const distPath = path.resolve(
+          process.cwd(),
+          "dist",
+          fileToRead.replace(/^\//, "")
+        );
+        try {
+          return await fs.readFile(distPath);
+        } catch {
+          // Fall back to HTTP fetch (SSR runtime)
+        }
         const res = await fetch(new URL(fileToRead, libraryConfig.siteUrl));
 
         if (!res.ok) {
