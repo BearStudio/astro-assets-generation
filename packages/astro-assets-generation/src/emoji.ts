@@ -1,6 +1,26 @@
-import emojiDataRaw from "./emoji-data.json";
+import { readFileSync, existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join, resolve } from "node:path";
 
-const emojiData = emojiDataRaw as Record<string, string>;
+function loadEmojiData(): Record<string, string> {
+  const candidates = [
+    join(dirname(fileURLToPath(import.meta.url)), "emoji-data.json"),
+    resolve(
+      process.cwd(),
+      "node_modules/@bearstudio/astro-assets-generation/dist/emoji-data.json"
+    ),
+  ];
+  for (const path of candidates) {
+    if (existsSync(path)) {
+      return JSON.parse(readFileSync(path, "utf-8"));
+    }
+  }
+  throw new Error(
+    `[astro-assets-generation] emoji-data.json not found. Tried: ${candidates.join(", ")}`
+  );
+}
+
+const emojiData = loadEmojiData();
 
 function emojiToCodePoint(emoji: string) {
   return [...emoji].map((c) => c.codePointAt(0)!.toString(16)).join("-");
