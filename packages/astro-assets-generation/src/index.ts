@@ -107,8 +107,8 @@ export function getStaticPathsForAssets(
 }
 
 export { getAstroImageBase64, configure, getConfiguredFonts } from "./image";
-export { extractEmoji } from "./emoji";
 export { Emoji } from "./components/Emoji";
+export { TextWithEmoji } from "./components/TextWithEmoji";
 export { FontWrapper } from "./components/FontWrapper";
 export type { AssetImageConfig, FontConfig, FontConfiguration } from "./types";
 export type { FontWrapperProps } from "./components/FontWrapper";
