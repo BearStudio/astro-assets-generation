@@ -17,8 +17,9 @@ export class NotFoundAssetError extends Error {
 }
 
 export const apiImageEndpoint: (modules: Record<string, unknown>) => APIRoute =
-  (modules) =>
-  async ({ params, site, ...rest }) => {
+  (modules) => async (context) => {
+    const { params, site, isPrerendered, ...rest } = context;
+    const clientAddress = isPrerendered ? undefined : context.clientAddress;
     try {
       console.log(`[API] Request: ${params.__image}/${params.__type}`);
 
@@ -40,7 +41,13 @@ export const apiImageEndpoint: (modules: Record<string, unknown>) => APIRoute =
 
       console.log(`[API] Rendering template: _${params.__image}.tsx`);
 
-      const component = await content.default({ params, site, ...rest });
+      const component = await content.default({
+        params,
+        site,
+        isPrerendered,
+        ...rest,
+        clientAddress,
+      });
       const config = content.config;
 
       if (params.__type === "debug") {
