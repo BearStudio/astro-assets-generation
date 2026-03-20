@@ -2,6 +2,8 @@ import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 
+const EMOJI_REGEX = /\p{Extended_Pictographic}/gu;
+
 function loadEmojiData(): Record<string, string> {
   const candidates = [
     join(dirname(fileURLToPath(import.meta.url)), "emoji-data.json"),
@@ -42,15 +44,12 @@ export function getEmojiDataUri(emoji: string) {
   return uri;
 }
 
-// helper function to extract emoji from a string (from a mdx for example) and use the Emoji component after
-export function extractEmoji(input: string) {
-  const emojiRegex = /\p{Extended_Pictographic}/gu;
-
-  const emojis = input.match(emojiRegex) ?? [];
-  const text = input.replace(emojiRegex, "").trim();
-
-  return {
-    text,
-    emojis,
-  };
-}
+export const splitAndFormatText = (input: string) => {
+  return input
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => ({
+      type: EMOJI_REGEX.test(part) ? "emoji" : "text",
+      value: part,
+    }));
+};

@@ -1,5 +1,5 @@
 ---
-title: "Custom Fonts and Emoji Support 🎨"
+title: "Custom Fonts 🔤 and Emoji Support 🎨"
 description: "Use custom fonts and emoji in your generated images with full Unicode support across languages."
 date: 2024-01-22
 author: john-doe
@@ -18,8 +18,18 @@ Register fonts in your `configure()` call:
 configure({
   customFonts: [
     { name: "Geist", url: "/fonts/Geist.ttf", weight: 400, style: "normal" },
-    { name: "Geist", url: "/fonts/Geist-Bold.ttf", weight: 700, style: "normal" },
-    { name: "GravitasOne", url: "/fonts/GravitasOne-Regular.ttf", weight: 400, style: "normal" },
+    {
+      name: "Geist",
+      url: "/fonts/Geist-Bold.ttf",
+      weight: 700,
+      style: "normal",
+    },
+    {
+      name: "GravitasOne",
+      url: "/fonts/GravitasOne-Regular.ttf",
+      weight: 400,
+      style: "normal",
+    },
   ],
 });
 ```
@@ -37,19 +47,24 @@ Then use them via `FontWrapper`:
 Use the `Emoji` component for crisp emoji rendering at any size:
 
 ```tsx
-import { Emoji, extractEmoji } from "@bearstudio/astro-assets-generation";
-
-const { text, emojis } = extractEmoji("Hello World 🌍");
-
+import { Emoji } from "@bearstudio/astro-assets-generation";
 return (
   <h1>
-    <span>{text}</span>
-    {emojis.map((e, i) => <Emoji key={i} emoji={e} size={64} />)}
+    <span>Hello world</span> <Emoji emoji={🌍} size={64} />
   </h1>
 );
 ```
 
-`extractEmoji` separates text from emoji so you can render each with the correct font and size — no more missing glyphs.
+Use the `TextWithEmoji` component to correctly display a text containing nested emojis
+
+```tsx
+import { TextWithEmoji } from "@bearstudio/astro-assets-generation";
+return (
+  <h1>
+    <TextWithEmoji>Hello 👋 World 🌍</TextWithEmoji>
+  </h1>
+);
+```
 
 ## Unicode Support
 

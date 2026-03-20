@@ -2,8 +2,8 @@ import { getEntry } from "astro:content";
 import {
   getAstroImageBase64,
   FontWrapper,
+  TextWithEmoji,
 } from "@bearstudio/astro-assets-generation";
-import { Emoji, extractEmoji } from "@bearstudio/astro-assets-generation";
 
 interface PostImageParams {
   params: { slug?: string };
@@ -37,8 +37,6 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
     ? await getAstroImageBase64(author.data.image)
     : null;
 
-  const { text: cleanTitle, emojis: titleEmojis } = extractEmoji(title);
-
   return (
     <FontWrapper
       fontFamily="Geist"
@@ -69,7 +67,7 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
           <h1
             tw="font-bold mb-2"
             style={{
-              fontSize: cleanTitle.length > 50 ? 56 : 72,
+              fontSize: 56,
               lineHeight: 1.2,
               color: "#f1f5f9",
               display: "flex",
@@ -77,15 +75,7 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
               gap: 16,
             }}
           >
-            <span>{cleanTitle}</span>
-
-            {titleEmojis.length > 0 && (
-              <span tw="flex">
-                {titleEmojis.map((emoji, index) => (
-                  <Emoji key={index} emoji={emoji} size={64} />
-                ))}
-              </span>
-            )}
+            <TextWithEmoji>{title}</TextWithEmoji>
           </h1>
 
           {description && (

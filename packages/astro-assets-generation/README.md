@@ -123,7 +123,7 @@ export const getStaticPaths = async () => {
   const posts = await getCollection("blog");
   return getStaticPathsForAssets(
     modules,
-    posts.map((post) => ({ slug: post.id })),
+    posts.map((post) => ({ slug: post.id }))
   );
 };
 
@@ -193,7 +193,7 @@ import "@/lib/assets";
 export const prerender = false;
 
 export const GET: APIRoute = apiImageEndpoint(
-  import.meta.glob("./_*.tsx", { eager: true }),
+  import.meta.glob("./_*.tsx", { eager: true })
 );
 ```
 
@@ -234,19 +234,26 @@ import { FontWrapper } from "@bearstudio/astro-assets-generation";
 
 ## Emoji Support
 
+Use the `Emoji` component for crisp emoji rendering at any size:
+
 ```tsx
-import { Emoji, extractEmoji } from "@bearstudio/astro-assets-generation";
+import { Emoji } from "@bearstudio/astro-assets-generation";
+return (
+  <h1>
+    <span>Hello world</span> <Emoji emoji={🌍} size={64} />
+  </h1>
+);
+```
 
-const { text, emojis } = extractEmoji("Hello 🚀 World 🔥");
-// text: "Hello World"
-// emojis: ["🚀", "🔥"]
+Use the `TextWithEmoji` component to correctly display a text containing nested emojis
 
-<div tw="flex items-center gap-2">
-  <h1>{text}</h1>
-  {emojis.map((emoji, i) => (
-    <Emoji key={i} emoji={emoji} size={64} />
-  ))}
-</div>;
+```tsx
+import { TextWithEmoji } from "@bearstudio/astro-assets-generation";
+return (
+  <h1>
+    <TextWithEmoji>Hello 👋 World 🌍</TextWithEmoji>
+  </h1>
+);
 ```
 
 ## Styling
@@ -300,7 +307,7 @@ Creates an Astro API route handler:
 
 ```typescript
 export const GET = apiImageEndpoint(
-  import.meta.glob("./_*.tsx", { eager: true }),
+  import.meta.glob("./_*.tsx", { eager: true })
 );
 ```
 
@@ -315,7 +322,7 @@ export const getStaticPaths = async () => {
   const posts = await getCollection("blog");
   return getStaticPathsForAssets(
     modules,
-    posts.map((post) => ({ slug: post.id })),
+    posts.map((post) => ({ slug: post.id }))
     // optional 3rd arg: ["png", "jpg"] by default
   );
 };
@@ -325,19 +332,15 @@ export const getStaticPaths = async () => {
 
 Converts Astro image to base64 data URI.
 
-#### `extractEmoji(input)`
-
-Extracts emojis from text:
-
-```typescript
-const { text, emojis } = extractEmoji("Hello 🚀");
-```
-
 ### Components
 
 #### `<Emoji emoji="🚀" size={64} />`
 
 Renders emojis using Twemoji SVGs.
+
+#### `<TextWithEmoji>`
+
+Renders a text string containing emojis, automatically splitting and rendering each emoji with Twemoji SVGs at the correct size.
 
 #### `<FontWrapper fontFamily="Geist">`
 
@@ -392,8 +395,7 @@ interface FontConfig {
 // src/pages/blog/[slug]/assets/_og-image.tsx
 import {
   FontWrapper,
-  Emoji,
-  extractEmoji,
+  TextWithEmoji,
 } from "@bearstudio/astro-assets-generation";
 import { getEntry } from "astro:content";
 
@@ -405,7 +407,6 @@ export default async function BlogOgImage({
   params: { slug: string };
 }) {
   const post = await getEntry("blog", params.slug);
-  const { text: title, emojis } = extractEmoji(post.data.title);
 
   return (
     <FontWrapper fontFamily="Geist" style={{ width: "100%", height: "100%" }}>
@@ -417,10 +418,7 @@ export default async function BlogOgImage({
       >
         <div tw="flex items-center mb-auto">
           <h1 tw="text-white text-7xl font-bold">
-            {title}
-            {emojis.map((emoji, i) => (
-              <Emoji key={i} emoji={emoji} size={72} />
-            ))}
+            <TextWithEmoji>{post.data.title}</TextWithEmoji>
           </h1>
         </div>
         <div tw="flex items-center justify-between">
