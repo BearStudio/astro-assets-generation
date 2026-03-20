@@ -51,11 +51,8 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
               {tags.slice(0, 3).map((tag: string) => (
                 <span
                   key={tag}
-                  tw="text-xl px-4 py-2 rounded-full mr-3"
-                  style={{
-                    background: "rgba(255, 255, 255, 0.2)",
-                    color: "white",
-                  }}
+                  tw="text-xl px-4 py-2 rounded-full mr-3 text-white"
+                  style={{ background: "rgba(255, 255, 255, 0.2)" }}
                 >
                   #{tag}
                 </span>
@@ -64,25 +61,16 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
           )}
 
           <h1
-            tw="font-bold text-white mb-2"
-            style={{
-              fontSize: 56,
-              lineHeight: 1.2,
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-            }}
+            tw="flex items-center gap-4 font-bold leading-[1.2] text-white mb-2"
+            style={{ fontSize: 56 }}
           >
             <TextWithEmoji>{title}</TextWithEmoji>
           </h1>
 
           {description && (
             <p
-              tw="text-3xl"
-              style={{
-                color: "rgba(255, 255, 255, 0.9)",
-                lineHeight: 1.4,
-              }}
+              tw="text-3xl leading-[1.4]"
+              style={{ color: "rgba(255, 255, 255, 0.9)" }}
             >
               {description.substring(0, 150)}
             </p>
@@ -90,10 +78,8 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
         </div>
 
         <div
-          tw="flex justify-between items-center pt-8"
-          style={{
-            borderTop: "2px solid rgba(255, 255, 255, 0.2)",
-          }}
+          tw="flex justify-between items-center pt-8 border-t"
+          style={{ borderColor: "rgba(255, 255, 255, 0.2)" }}
         >
           <div tw="flex items-center">
             {author && (

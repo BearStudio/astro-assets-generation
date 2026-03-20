@@ -51,10 +51,9 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
               {tags.slice(0, 3).map((tag: string) => (
                 <span
                   key={tag}
-                  tw="text-xl px-4 py-2 rounded-full mr-3"
+                  tw="text-xl px-4 py-2 rounded-full mr-3 text-indigo-300"
                   style={{
                     background: "rgba(99, 102, 241, 0.3)",
-                    color: "#a5b4fc",
                     border: "1px solid rgba(99, 102, 241, 0.5)",
                   }}
                 >
@@ -65,37 +64,22 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
           )}
 
           <h1
-            tw="font-bold mb-2"
-            style={{
-              fontSize: 56,
-              lineHeight: 1.2,
-              color: "#f1f5f9",
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-            }}
+            tw="flex items-center gap-4 font-bold leading-[1.2] text-slate-100 mb-2"
+            style={{ fontSize: 56 }}
           >
             <TextWithEmoji>{title}</TextWithEmoji>
           </h1>
 
           {description && (
-            <p
-              tw="text-3xl"
-              style={{
-                color: "#94a3b8",
-                lineHeight: 1.4,
-              }}
-            >
+            <p tw="text-3xl leading-[1.4] text-slate-400">
               {description.substring(0, 150)}
             </p>
           )}
         </div>
 
         <div
-          tw="flex justify-between items-center pt-8"
-          style={{
-            borderTop: "1px solid rgba(99, 102, 241, 0.3)",
-          }}
+          tw="flex justify-between items-center pt-8 border-t"
+          style={{ borderColor: "rgba(99, 102, 241, 0.3)" }}
         >
           <div tw="flex items-center">
             {author && (
@@ -103,35 +87,26 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
                 {authorImageBase64 && (
                   <img
                     src={authorImageBase64}
-                    tw="w-16 h-16 rounded-full mr-4"
-                    style={{
-                      objectFit: "cover",
-                      border: "2px solid rgba(99, 102, 241, 0.5)",
-                    }}
+                    tw="w-16 h-16 rounded-full mr-4 object-cover border-2"
+                    style={{ borderColor: "rgba(99, 102, 241, 0.5)" }}
                   />
                 )}
                 <div tw="flex flex-col">
-                  <span tw="text-2xl" style={{ color: "#e2e8f0" }}>
-                    {author.data.name}
-                  </span>
-                  <span tw="text-xl" style={{ color: "#64748b" }}>
-                    Blog Post
-                  </span>
+                  <span tw="text-2xl text-slate-200">{author.data.name}</span>
+                  <span tw="text-xl text-slate-500">Blog Post</span>
                 </div>
               </div>
             )}
           </div>
           <div tw="flex flex-col items-end">
             {date && (
-              <span tw="text-xl" style={{ color: "#64748b" }}>
+              <span tw="text-xl text-slate-500">
                 {new Date(date).toLocaleDateString("en-US", {
                   dateStyle: "medium",
                 })}
               </span>
             )}
-            <span tw="text-base" style={{ color: "#4f46e5" }}>
-              Generated on-demand
-            </span>
+            <span tw="text-base text-indigo-600">Generated on-demand</span>
           </div>
         </div>
       </div>

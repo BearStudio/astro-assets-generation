@@ -258,13 +258,62 @@ return (
 
 ## Styling
 
-Use Tailwind CSS via the `tw` prop or inline styles:
+Images are rendered by [Takumi](https://takumi.kane.tw/), which supports a subset of CSS. Use the `tw` prop for Tailwind classes and the `style` prop for values that `tw` cannot express.
+
+### Use `tw` for
+
+Layout, typography, solid colors, spacing — anything expressible with standard Tailwind classes:
 
 ```tsx
-<div tw="flex items-center justify-center w-full h-full bg-blue-500">
-  <h1 tw="text-white text-8xl font-bold">Hello</h1>
+<div tw="flex flex-col w-full h-full p-16 bg-slate-900">
+  <h1 tw="text-white text-7xl font-bold leading-tight">Hello</h1>
+  <p tw="text-slate-400 text-3xl mt-4">Subtitle</p>
 </div>
 ```
+
+### Use `style` for
+
+The following cases are not supported via `tw` and require the `style` prop.
+
+**Gradients** — `bg-gradient-to-*` with arbitrary color values is not reliably processed:
+
+```tsx
+// ❌
+<div tw="bg-gradient-to-br from-[#0f172a] to-[#1e1b4b]">
+// ✅
+<div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)" }}>
+```
+
+**Colors with opacity** — the Tailwind `/opacity` modifier (e.g. `bg-indigo-500/30`) is not supported:
+
+```tsx
+// ❌
+<span tw="bg-indigo-500/30 border border-indigo-500/50">
+// ✅
+<span style={{ background: "rgba(99, 102, 241, 0.3)", border: "1px solid rgba(99, 102, 241, 0.5)" }}>
+```
+
+**`object-fit`** — `object-cover` / `object-contain` classes may not apply correctly on `<img>`:
+
+```tsx
+// ❌
+<img tw="w-16 h-16 object-cover" />
+// ✅
+<img tw="w-16 h-16" style={{ objectFit: "cover" }} />
+```
+
+**`box-shadow`** — `shadow-*` classes are not supported:
+
+```tsx
+// ❌
+<div tw="shadow-lg">
+// ✅
+<div style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.4)" }}>
+```
+
+**`text-shadow`** — not supported at all (neither `tw` nor via standard `style` — Takumi does not implement this property).
+
+You can mix both props freely on the same element.
 
 ## Working with Images
 

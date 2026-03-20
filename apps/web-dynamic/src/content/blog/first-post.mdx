@@ -70,3 +70,22 @@ export const GET = apiImageEndpoint(modules);
 ```
 
 The image is now available at `/blog/[slug]/assets/og.png`.
+
+## Styling: `tw` vs `style`
+
+Use the `tw` prop for layout, typography, spacing, and solid colors — anything expressible with standard Tailwind classes:
+
+```tsx
+<div tw="flex flex-col w-full h-full p-16 bg-slate-900">
+  <h1 tw="text-white text-7xl font-bold">Hello</h1>
+</div>
+```
+
+Some CSS values are not supported via `tw` and require the `style` prop:
+
+- **Gradients** — use `style={{ background: "linear-gradient(...)" }}`
+- **Colors with opacity** — use `style={{ color: "rgba(...)" }}` instead of `tw="text-indigo-500/30"`
+- **`object-fit`** on images — use `style={{ objectFit: "cover" }}`
+- **`box-shadow`** — use `style={{ boxShadow: "..." }}`
+
+You can mix both props on the same element.
