@@ -38,3 +38,6 @@ yarn-error.log*
 *.pem
 
 .vscode/
+
+# The file should be auto-deleted after the build but just in case
+packages/astro-assets-generation/src/emoji-data.json
