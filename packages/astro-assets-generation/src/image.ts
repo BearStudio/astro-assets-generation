@@ -272,16 +272,12 @@ export async function DEBUG_HTML(
           background: white;
           overflow: hidden;
         }
-        /* Replace tw attribute with class for Tailwind */
-        [tw] {
-          /* This will be handled by replacing tw with class in the HTML */
-        }
       </style>
     </head>
     <body>
       <div id="screen">
         <div id="render">
-          ${html.replace(/tw=/g, "class=")}
+          ${html}
         </div>
       </div>
     </body>

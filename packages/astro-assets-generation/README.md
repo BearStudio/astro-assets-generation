@@ -92,13 +92,19 @@ export default function OgImage({ params }: { params: { slug: string } }) {
   return (
     <FontWrapper fontFamily="Geist">
       <div
-        tw="flex flex-col w-full h-full p-16"
         style={{
+          display: "flex",
+          flexDirection: "column",
+          width: "100%",
+          height: "100%",
+          padding: 64,
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         }}
       >
-        <h1 tw="text-white text-7xl font-bold">My Blog Post</h1>
-        <p tw="text-white text-2xl">Post: {params.slug}</p>
+        <h1 style={{ color: "white", fontSize: 72, fontWeight: "bold" }}>
+          My Blog Post
+        </h1>
+        <p style={{ color: "white", fontSize: 24 }}>Post: {params.slug}</p>
       </div>
     </FontWrapper>
   );
@@ -226,7 +232,7 @@ Automatically creates a font stack with fallbacks:
 import { FontWrapper } from "@bearstudio/astro-assets-generation";
 
 <FontWrapper fontFamily="Geist">
-  <div tw="p-16">
+  <div style={{ padding: 64 }}>
     <p>English, 日本語, 한국어, العربية, ไทย - all supported!</p>
   </div>
 </FontWrapper>;
@@ -258,11 +264,20 @@ return (
 
 ## Styling
 
-Use Tailwind CSS via the `tw` prop or inline styles:
+Use inline styles via the `style` prop:
 
 ```tsx
-<div tw="flex items-center justify-center w-full h-full bg-blue-500">
-  <h1 tw="text-white text-8xl font-bold">Hello</h1>
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#3b82f6",
+  }}
+>
+  <h1 style={{ color: "white", fontSize: 96, fontWeight: "bold" }}>Hello</h1>
 </div>
 ```
 
@@ -275,13 +290,19 @@ import { getAstroImageBase64 } from "@bearstudio/astro-assets-generation";
 
 const avatarBase64 = await getAstroImageBase64(author.data.avatar);
 
-<img src={avatarBase64} tw="w-32 h-32 rounded-full" />;
+<img
+  src={avatarBase64}
+  style={{ width: 128, height: 128, borderRadius: 9999 }}
+/>;
 ```
 
 ### External Images
 
 ```tsx
-<img src="https://example.com/image.jpg" tw="w-64 h-64" />
+<img
+  src="https://example.com/image.jpg"
+  style={{ width: 256, height: 256 }}
+/>
 ```
 
 ## API Reference
@@ -385,7 +406,7 @@ interface FontConfig {
 
 **Styling issues?**
 
-- Use `tw` prop, not `className`
+- Use the `style` prop with inline CSS objects
 - Test in debug mode (`.debug` extension)
 - Stick to well-supported CSS features
 
@@ -411,19 +432,35 @@ export default async function BlogOgImage({
   return (
     <FontWrapper fontFamily="Geist" style={{ width: "100%", height: "100%" }}>
       <div
-        tw="flex flex-col w-full h-full p-16"
         style={{
+          display: "flex",
+          flexDirection: "column",
+          width: "100%",
+          height: "100%",
+          padding: 64,
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         }}
       >
-        <div tw="flex items-center mb-auto">
-          <h1 tw="text-white text-7xl font-bold">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            marginBottom: "auto",
+          }}
+        >
+          <h1 style={{ color: "white", fontSize: 72, fontWeight: "bold" }}>
             <TextWithEmoji>{post.data.title}</TextWithEmoji>
           </h1>
         </div>
-        <div tw="flex items-center justify-between">
-          <p tw="text-white text-2xl">{post.data.author}</p>
-          <p tw="text-white text-2xl">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <p style={{ color: "white", fontSize: 24 }}>{post.data.author}</p>
+          <p style={{ color: "white", fontSize: 24 }}>
             {new Date(post.data.date).toLocaleDateString()}
           </p>
         </div>
