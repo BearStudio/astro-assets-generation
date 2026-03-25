@@ -94,6 +94,7 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
               fontSize: 56,
               lineHeight: 1.2,
               display: "flex",
+              flexWrap: "wrap",
               alignItems: "center",
               gap: 16,
             }}
@@ -139,9 +140,7 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
                     }}
                   />
                 )}
-                <div
-                  style={{ display: "flex", flexDirection: "column" }}
-                >
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   <span
                     style={{
                       fontSize: 24,
@@ -170,17 +169,13 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
             }}
           >
             {date && (
-              <span
-                style={{ fontSize: 20, color: "rgba(255, 255, 255, 0.7)" }}
-              >
+              <span style={{ fontSize: 20, color: "rgba(255, 255, 255, 0.7)" }}>
                 {new Date(date).toLocaleDateString("en-US", {
                   dateStyle: "medium",
                 })}
               </span>
             )}
-            <span
-              style={{ fontSize: 16, color: "rgba(255, 255, 255, 0.4)" }}
-            >
+            <span style={{ fontSize: 16, color: "rgba(255, 255, 255, 0.4)" }}>
               Generated at build time
             </span>
           </div>

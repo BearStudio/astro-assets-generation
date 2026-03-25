@@ -95,6 +95,7 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
               lineHeight: 1.2,
               color: "#f1f5f9",
               display: "flex",
+              flexWrap: "wrap",
               alignItems: "center",
               gap: 16,
             }}
@@ -140,9 +141,7 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
                     }}
                   />
                 )}
-                <div
-                  style={{ display: "flex", flexDirection: "column" }}
-                >
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   <span style={{ fontSize: 24, color: "#e2e8f0" }}>
                     {author.data.name}
                   </span>
