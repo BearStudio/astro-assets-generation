@@ -106,7 +106,12 @@ export function getStaticPathsForAssets(
   );
 }
 
-export { getAstroImageBase64, configure, getConfiguredFonts } from "./image";
+export {
+  getAstroImageBase64,
+  configure,
+  getConfiguredFonts,
+  jsxToBase64,
+} from "./image";
 export { Emoji } from "./components/Emoji";
 export { TextWithEmoji } from "./components/TextWithEmoji";
 export { FontWrapper } from "./components/FontWrapper";
