@@ -18,11 +18,18 @@ export class NotFoundAssetError extends Error {
 
 export const apiImageEndpoint: (modules: Record<string, unknown>) => APIRoute =
   (modules) => async (context) => {
-    const { params, site, isPrerendered, ...rest } = context;
-    // `clientAddress` throws in prerendered routes and static sites.
-    // We access it only after checking `isPrerendered`, then pass it explicitly so templates receive
-    // `undefined` instead of a runtime error when the route is prerendered.
-    const clientAddress = isPrerendered ? undefined : context.clientAddress;
+    // Some context getters (e.g. `clientAddress`) throw in prerendered/static routes.
+    // Safely copy all properties so the `...rest` spread doesn't trigger throwing getters.
+    const safeContext = Object.fromEntries(
+      Object.keys(context).map((k) => {
+        try {
+          return [k, (context as any)[k]];
+        } catch {
+          return [k, undefined];
+        }
+      })
+    );
+    const { params, site, ...rest } = safeContext;
     try {
       console.log(`[API] Request: ${params.__image}/${params.__type}`);
 
@@ -47,9 +54,7 @@ export const apiImageEndpoint: (modules: Record<string, unknown>) => APIRoute =
       const component = await content.default({
         params,
         site,
-        isPrerendered,
         ...rest,
-        clientAddress,
       });
       const config = content.config;
 
