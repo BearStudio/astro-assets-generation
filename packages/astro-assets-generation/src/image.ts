@@ -375,3 +375,12 @@ export async function getAstroImageBase64(image: { src: string }) {
 export function imageBufferToBase64(buffer: Buffer, fileType: string) {
   return `data:image/${fileType};base64, ${buffer.toString("base64")}`;
 }
+
+export async function jsxToBase64(
+  component: JSX.Element,
+  config: { width: number; height: number }
+): Promise<string> {
+  const arrayBuffer = await PNG(component, config);
+  const buffer = Buffer.from(arrayBuffer);
+  return imageBufferToBase64(buffer, "png");
+}

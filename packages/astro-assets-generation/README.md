@@ -284,6 +284,23 @@ const avatarBase64 = await getAstroImageBase64(author.data.avatar);
 <img src="https://example.com/image.jpg" tw="w-64 h-64" />
 ```
 
+### JSX to Base64
+
+Use `jsxToBase64` to render any JSX component as a PNG and get a base64 data URI. This is useful for embedding generated images inside other templates.
+
+```tsx
+import { jsxToBase64 } from "@bearstudio/astro-assets-generation";
+
+const base64 = await jsxToBase64(
+  <div tw="flex items-center justify-center w-full h-full bg-blue-500">
+    <h1 tw="text-white text-4xl">Hello</h1>
+  </div>,
+  { width: 600, height: 300 }
+);
+
+<img src={base64} tw="w-64 h-32" />;
+```
+
 ## API Reference
 
 ### Functions
@@ -331,6 +348,14 @@ export const getStaticPaths = async () => {
 #### `getAstroImageBase64(image)`
 
 Converts Astro image to base64 data URI.
+
+#### `jsxToBase64(component, config)`
+
+Renders a JSX element as a PNG and returns a base64 data URI. Useful for embedding a generated image inside another template.
+
+```typescript
+const base64 = await jsxToBase64(<MyComponent />, { width: 600, height: 300 });
+```
 
 ### Components
 
