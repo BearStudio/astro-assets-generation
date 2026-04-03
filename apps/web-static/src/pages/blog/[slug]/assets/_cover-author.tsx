@@ -44,15 +44,38 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
         background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
       }}
     >
-      <div tw="flex flex-col w-full h-full p-16">
-        <div tw="flex flex-col flex-1 justify-center">
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          width: "100%",
+          height: "100%",
+          padding: 64,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            justifyContent: "center",
+          }}
+        >
           {tags.length > 0 && (
-            <div tw="flex flex-wrap mb-6">
+            <div
+              style={{ display: "flex", flexWrap: "wrap", marginBottom: 24 }}
+            >
               {tags.slice(0, 3).map((tag: string) => (
                 <span
                   key={tag}
-                  tw="text-xl px-4 py-2 rounded-full mr-3"
                   style={{
+                    fontSize: 20,
+                    paddingLeft: 16,
+                    paddingRight: 16,
+                    paddingTop: 8,
+                    paddingBottom: 8,
+                    borderRadius: 9999,
+                    marginRight: 12,
                     background: "rgba(255, 255, 255, 0.2)",
                     color: "white",
                   }}
@@ -64,11 +87,14 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
           )}
 
           <h1
-            tw="font-bold text-white mb-2"
             style={{
+              fontWeight: "bold",
+              color: "white",
+              marginBottom: 8,
               fontSize: 56,
               lineHeight: 1.2,
               display: "flex",
+              flexWrap: "wrap",
               alignItems: "center",
               gap: 16,
             }}
@@ -78,8 +104,8 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
 
           {description && (
             <p
-              tw="text-3xl"
               style={{
+                fontSize: 30,
                 color: "rgba(255, 255, 255, 0.9)",
                 lineHeight: 1.4,
               }}
@@ -90,34 +116,44 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
         </div>
 
         <div
-          tw="flex justify-between items-center pt-8"
           style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingTop: 32,
             borderTop: "2px solid rgba(255, 255, 255, 0.2)",
           }}
         >
-          <div tw="flex items-center">
+          <div style={{ display: "flex", alignItems: "center" }}>
             {author && (
-              <div tw="flex items-center">
+              <div style={{ display: "flex", alignItems: "center" }}>
                 {authorImageBase64 && (
                   <img
                     src={authorImageBase64}
-                    tw="w-16 h-16 rounded-full mr-4"
                     style={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: 9999,
+                      marginRight: 16,
                       objectFit: "cover",
                       border: "2px solid rgba(255, 255, 255, 0.3)",
                     }}
                   />
                 )}
-                <div tw="flex flex-col">
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   <span
-                    tw="text-2xl"
-                    style={{ color: "rgba(255, 255, 255, 0.9)" }}
+                    style={{
+                      fontSize: 24,
+                      color: "rgba(255, 255, 255, 0.9)",
+                    }}
                   >
                     {author.data.name}
                   </span>
                   <span
-                    tw="text-xl"
-                    style={{ color: "rgba(255, 255, 255, 0.7)" }}
+                    style={{
+                      fontSize: 20,
+                      color: "rgba(255, 255, 255, 0.7)",
+                    }}
                   >
                     Blog Post
                   </span>
@@ -125,15 +161,21 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
               </div>
             )}
           </div>
-          <div tw="flex flex-col items-end">
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+            }}
+          >
             {date && (
-              <span tw="text-xl" style={{ color: "rgba(255, 255, 255, 0.7)" }}>
+              <span style={{ fontSize: 20, color: "rgba(255, 255, 255, 0.7)" }}>
                 {new Date(date).toLocaleDateString("en-US", {
                   dateStyle: "medium",
                 })}
               </span>
             )}
-            <span tw="text-base" style={{ color: "rgba(255, 255, 255, 0.4)" }}>
+            <span style={{ fontSize: 16, color: "rgba(255, 255, 255, 0.4)" }}>
               Generated at build time
             </span>
           </div>

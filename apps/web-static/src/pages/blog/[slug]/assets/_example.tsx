@@ -11,13 +11,19 @@ export default function OgImage({ params }: { params: { slug: string } }) {
   return (
     <FontWrapper fontFamily="Geist">
       <div
-        tw="flex flex-col w-full h-full p-16"
         style={{
+          display: "flex",
+          flexDirection: "column",
+          width: "100%",
+          height: "100%",
+          padding: 64,
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         }}
       >
-        <h1 tw="text-white text-7xl font-bold">My Blog Post</h1>
-        <p tw="text-white text-2xl">Post: {params.slug}</p>
+        <h1 style={{ color: "white", fontSize: 72, fontWeight: "bold" }}>
+          My Blog Post
+        </h1>
+        <p style={{ color: "white", fontSize: 24 }}>Post: {params.slug}</p>
       </div>
     </FontWrapper>
   );
