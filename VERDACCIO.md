@@ -71,7 +71,7 @@ pnpm publish --registry http://localhost:4873 --no-git-checks
 In the project that consumes the library:
 
 ```bash
-pnpm add @bearstudio/astro-assets-generation
+pnpm add @bearstudio/astro-assets-generation --registry http://localhost:4873
 ```
 
 ## 7. Republish after changes
