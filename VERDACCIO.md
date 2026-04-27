@@ -1,91 +1,91 @@
-# Release sur Verdaccio
+# Release on Verdaccio
 
-Ce guide explique comment publier `@bearstudio/astro-assets-generation` sur un registre Verdaccio local pour tester la lib avant de la publier sur npm.
+This guide explains how to publish `@bearstudio/astro-assets-generation` to a local Verdaccio registry to test the library before publishing it to npm.
 
-## Prérequis
+## Prerequisites
 
-- [Verdaccio](https://verdaccio.org/) installé (`npm install -g verdaccio`)
-- pnpm installé
+- [Verdaccio](https://verdaccio.org/) installed (`npm install -g verdaccio`)
+- pnpm installed
 
-## 1. Démarrer Verdaccio
+## 1. Start Verdaccio
 
-Dans un terminal séparé :
+In a separate terminal:
 
 ```bash
 verdaccio
 ```
 
-Verdaccio sera disponible sur `http://localhost:4873`.
+Verdaccio will be available at `http://localhost:4873`.
 
-## 2. Créer un compte (première fois uniquement)
+## 2. Create an account (first time only)
 
 ```bash
 npm adduser --registry http://localhost:4873
 ```
 
-Renseigne un username, password et email (les valeurs peuvent être fictives pour un usage local).
+Enter any username, password, and email — the values can be fake for local use.
 
-## 3. Builder la lib
+## 3. Build the library
 
-Depuis la racine du monorepo :
+From the monorepo root:
 
 ```bash
 pnpm build
 ```
 
-Ou uniquement le package :
+Or only the package:
 
 ```bash
 cd packages/astro-assets-generation
 pnpm build
 ```
 
-## 4. Publier sur Verdaccio
+## 4. Publish to Verdaccio
 
 ```bash
 cd packages/astro-assets-generation
 pnpm verdaccio:publish
 ```
 
-Ce script exécute :
+This runs:
 
 ```bash
 pnpm publish --registry http://localhost:4873 --no-git-checks
 ```
 
-> Le flag `--no-git-checks` permet de publier sans que le working tree soit propre.
+> The `--no-git-checks` flag allows publishing without a clean working tree.
 
-## 5. Tester dans un projet
+## 5. Test in a project
 
-Dans le projet qui doit consommer la lib :
+In the project that consumes the library:
 
 ```bash
 pnpm add @bearstudio/astro-assets-generation
 ```
 
-## 6. Republier après des modifications
+## 6. Republish after changes
 
-Si la version n'a pas changé, dépublie d'abord :
+If the version hasn't changed, unpublish first:
 
 ```bash
 cd packages/astro-assets-generation
 pnpm verdaccio:unpublish
 ```
 
-Puis rebuild et republie :
+Then rebuild and republish:
 
 ```bash
 pnpm build
 pnpm verdaccio:publish
 ```
 
-Si la version a changé (dans `package.json`), tu peux republier directement sans dépublier.
+If the version has changed (in `package.json`), you can republish directly without unpublishing.
 
-## Bump de version
+## Bumping the version
 
-Modifie manuellement le champ `version` dans `packages/astro-assets-generation/package.json` avant de publier.
+Manually update the `version` field in `packages/astro-assets-generation/package.json` before publishing.
 
-Exemple :
+Example:
 
 ```json
 {
