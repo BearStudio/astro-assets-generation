@@ -8,6 +8,8 @@
     "prebuild": "tsx src/scripts/bundle-emojis.ts",
     "build": "tsup src/index.ts --format esm --dts --minify",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "pnpm build",
+    "npm:publish": "pnpm publish --access public",
     "verdaccio:publish": "pnpm publish --registry http://localhost:4873 --no-git-checks",
     "verdaccio:unpublish": "npm unpublish @bearstudio/astro-assets-generation@$(node -p \"require('./package.json').version\") --registry http://localhost:4873 --force"
   },
