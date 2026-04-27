@@ -17,7 +17,18 @@ verdaccio
 
 Verdaccio will be available at `http://localhost:4873`.
 
-## 2. Create an account (first time only)
+## 2. Configure max body size (first time only)
+
+The library tarball exceeds Verdaccio's default body size limit. Update `~/.config/verdaccio/config.yaml` to raise it:
+
+```yaml
+# https://verdaccio.org/docs/configuration#max-body-size
+max_body_size: 20mb
+```
+
+Restart Verdaccio after saving the file.
+
+## 3. Create an account (first time only)
 
 ```bash
 npm adduser --registry http://localhost:4873
@@ -25,7 +36,7 @@ npm adduser --registry http://localhost:4873
 
 Enter any username, password, and email — the values can be fake for local use.
 
-## 3. Build the library
+## 4. Build the library
 
 From the monorepo root:
 
@@ -40,7 +51,7 @@ cd packages/astro-assets-generation
 pnpm build
 ```
 
-## 4. Publish to Verdaccio
+## 5. Publish to Verdaccio
 
 ```bash
 cd packages/astro-assets-generation
@@ -55,7 +66,7 @@ pnpm publish --registry http://localhost:4873 --no-git-checks
 
 > The `--no-git-checks` flag allows publishing without a clean working tree.
 
-## 5. Test in a project
+## 6. Test in a project
 
 In the project that consumes the library:
 
@@ -63,7 +74,7 @@ In the project that consumes the library:
 pnpm add @bearstudio/astro-assets-generation
 ```
 
-## 6. Republish after changes
+## 7. Republish after changes
 
 If the version hasn't changed, unpublish first:
 
