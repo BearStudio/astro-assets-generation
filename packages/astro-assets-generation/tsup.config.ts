@@ -5,6 +5,7 @@ import { join } from "node:path";
 export default defineConfig({
   entry: {
     index: "src/index.ts",
+    "disk-loader": "src/disk-loader.ts",
   },
   format: ["esm"],
   dts: true,

@@ -56,6 +56,7 @@ Create a configuration file (e.g., `src/lib/assets.ts`):
 
 ```typescript
 import { configure } from "@bearstudio/astro-assets-generation";
+import { diskLoader } from "@bearstudio/astro-assets-generation/disk-loader";
 
 configure({
   debugBackground: "#0a0a0a",
@@ -70,6 +71,9 @@ configure({
       style: "normal",
     },
   ],
+  // Required for `output: 'static'` (prerender has no server). Omit for SSR
+  // adapters — the library will fetch from `siteUrl` instead.
+  loadAsset: diskLoader(),
 });
 ```
 
@@ -202,6 +206,14 @@ export const GET: APIRoute = apiImageEndpoint(
   import.meta.glob("./_*.tsx", { eager: true })
 );
 ```
+
+### Drop `loadAsset` for serverless deployments
+
+When you ship to a serverless adapter (Vercel, Netlify, Cloudflare…), remove
+`loadAsset: diskLoader()` from your `configure()` call. The library will fetch
+images and fonts from `siteUrl` at runtime, and the `disk-loader` import is no
+longer needed. Keeping it in serverless builds causes file tracers like
+`@vercel/nft` to bundle your entire `dist/` into the function output.
 
 ## Font Management
 
@@ -336,8 +348,28 @@ configure({
   customFonts: [
     /* ... */
   ],
+  // Optional. Resolves `getAstroImageBase64` images and `/`-prefixed font
+  // URLs before falling back to fetch. Required for `output: 'static'`.
+  loadAsset: diskLoader(),
 });
 ```
+
+#### `diskLoader(options?)`
+
+Imported from `@bearstudio/astro-assets-generation/disk-loader`. Returns an
+`AssetLoader` that reads a request URL from disk, looking under
+`process.cwd()/dist/` then `process.cwd()/public/` by default.
+
+```typescript
+import { diskLoader } from "@bearstudio/astro-assets-generation/disk-loader";
+
+loadAsset: diskLoader();
+loadAsset: diskLoader({ directories: ["dist", "public", "custom"] });
+```
+
+Lives in a sub-export so its `process.cwd()` references stay out of the main
+entry — without that split, `@vercel/nft` would trace `dist/**` into
+serverless function bundles.
 
 #### `apiImageEndpoint(modules)`
 
@@ -414,6 +446,14 @@ interface FontConfig {
   style: "normal" | "italic";
 }
 ```
+
+#### `AssetLoader`
+
+```typescript
+type AssetLoader = (url: string) => Promise<Buffer | null | undefined>;
+```
+
+Return `null` or `undefined` to fall back to fetch.
 
 ## Troubleshooting
 

@@ -1,12 +1,12 @@
 {
   "name": "@bearstudio/astro-assets-generation",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Astro integration to generate assets with Takumi",
   "scripts": {
-    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "dev": "tsup --watch",
     "prebuild": "tsx src/scripts/bundle-emojis.ts",
-    "build": "tsup src/index.ts --format esm --dts --minify",
+    "build": "tsup",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepublishOnly": "pnpm build",
     "npm:publish": "pnpm publish --access public",
@@ -17,6 +17,10 @@
     ".": {
       "types": "./src/index.ts",
       "import": "./dist/index.js"
+    },
+    "./disk-loader": {
+      "types": "./src/disk-loader.ts",
+      "import": "./dist/disk-loader.js"
     }
   },
   "files": [
