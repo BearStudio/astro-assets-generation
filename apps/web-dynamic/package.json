@@ -16,8 +16,6 @@
     "@bearstudio/astro-assets-generation": "workspace:*",
     "@tailwindcss/typography": "0.5.19",
     "@tailwindcss/vite": "4.1.18",
-    "@takumi-rs/core": "0.65.0",
-    "@takumi-rs/image-response": "0.65.0",
     "astro": "5.16.12",
     "react": "19.2.0",
     "react-dom": "19.2.0",

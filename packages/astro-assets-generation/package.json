@@ -28,7 +28,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@takumi-rs/image-response": "0.65.0",
+    "@takumi-rs/image-response": "1.1.2",
     "@twemoji/svg": "15.0.0",
     "ts-pattern": "5.9.0"
   },

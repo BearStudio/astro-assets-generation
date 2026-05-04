@@ -19,18 +19,11 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
-      exclude: [
-        "@takumi-rs/image-response",
-        "@takumi-rs/core",
-        "@takumi-rs/helpers",
-      ],
+      exclude: ["@takumi-rs/image-response"],
     },
     ssr: {
-      external: ["@takumi-rs/core", "@takumi-rs/image-response"],
-      noExternal: [
-        "@takumi-rs/helpers",
-        "@bearstudio/astro-assets-generation",
-      ],
+      external: ["@takumi-rs/image-response"],
+      noExternal: ["@bearstudio/astro-assets-generation"],
     },
   },
   integrations: [react(), mdx()],
