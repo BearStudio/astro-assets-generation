@@ -1,38 +1,29 @@
-import { createRequire } from "node:module";
 import { FontConfig } from "./types";
 
-const cjsRequire = createRequire(import.meta.url);
+const FONTS_CDN = "https://cdn.jsdelivr.net/npm";
 
 export const DEFAULT_FONTS = [
   {
     name: "Thai",
-    url: cjsRequire.resolve(
-      "@fontsource/noto-sans-thai/files/noto-sans-thai-thai-400-normal.woff2"
-    ),
+    url: `${FONTS_CDN}/@fontsource/noto-sans-thai@5.2.8/files/noto-sans-thai-thai-400-normal.woff2`,
     weight: 400,
     style: "normal",
   },
   {
     name: "Jap",
-    url: cjsRequire.resolve(
-      "@fontsource/noto-sans-jp/files/noto-sans-jp-japanese-400-normal.woff2"
-    ),
+    url: `${FONTS_CDN}/@fontsource/noto-sans-jp@5.2.8/files/noto-sans-jp-japanese-400-normal.woff2`,
     weight: 400,
     style: "normal",
   },
   {
     name: "KR",
-    url: cjsRequire.resolve(
-      "@fontsource/noto-sans-kr/files/noto-sans-kr-korean-400-normal.woff2"
-    ),
+    url: `${FONTS_CDN}/@fontsource/noto-sans-kr@5.2.8/files/noto-sans-kr-korean-400-normal.woff2`,
     weight: 400,
     style: "normal",
   },
   {
     name: "Arabic",
-    url: cjsRequire.resolve(
-      "@fontsource/noto-sans-arabic/files/noto-sans-arabic-arabic-400-normal.woff2"
-    ),
+    url: `${FONTS_CDN}/@fontsource/noto-sans-arabic@5.2.8/files/noto-sans-arabic-arabic-400-normal.woff2`,
     weight: 400,
     style: "normal",
   },

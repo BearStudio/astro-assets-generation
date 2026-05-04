@@ -103,18 +103,6 @@ importers:
 
   packages/astro-assets-generation:
     dependencies:
-      '@fontsource/noto-sans-arabic':
-        specifier: 5.2.8
-        version: 5.2.8
-      '@fontsource/noto-sans-jp':
-        specifier: 5.2.8
-        version: 5.2.8
-      '@fontsource/noto-sans-kr':
-        specifier: 5.2.8
-        version: 5.2.8
-      '@fontsource/noto-sans-thai':
-        specifier: 5.2.8
-        version: 5.2.8
       '@takumi-rs/image-response':
         specifier: 1.1.2
         version: 1.1.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -709,18 +697,6 @@ packages:
   '@eslint/plugin-kit@0.4.1':
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-
-  '@fontsource/noto-sans-arabic@5.2.8':
-    resolution: {integrity: sha512-8GS2d5NKUq8mEeUEIB2wnBQa39myvcndaQF9GlGtKJN9gBGRzVAZ7mKQHHEy6ngPpR6EA3McjYWsQju73sRSZw==}
-
-  '@fontsource/noto-sans-jp@5.2.8':
-    resolution: {integrity: sha512-ngWXPtSV3XH8ZmNX9hnfeQ+x/3mCoaAOA3BVDcyS5jQdh4FYqKjf/S9tEUEYDPwGa2pULJVXTO2+oFg42gWvSw==}
-
-  '@fontsource/noto-sans-kr@5.2.8':
-    resolution: {integrity: sha512-2Nbu2Iy1YGUkHbOTF8mMchipbg8g4ZBTpUzHwg09/dz/9b7r5o5h2PF6hnbismsBp8GzpsBA66OlQJw3GZehuw==}
-
-  '@fontsource/noto-sans-thai@5.2.8':
-    resolution: {integrity: sha512-HUQAxOzclod9PXQx4uMoGRAsor+64snW91QuBg39jT9lbsp7jJx1i3jAtHPJ7mQxHEHnhRjNp54fb8GqPPC6zg==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -4402,14 +4378,6 @@ snapshots:
     dependencies:
       '@eslint/core': 0.17.0
       levn: 0.4.1
-
-  '@fontsource/noto-sans-arabic@5.2.8': {}
-
-  '@fontsource/noto-sans-jp@5.2.8': {}
-
-  '@fontsource/noto-sans-kr@5.2.8': {}
-
-  '@fontsource/noto-sans-thai@5.2.8': {}
 
   '@humanfs/core@0.19.1': {}
 
