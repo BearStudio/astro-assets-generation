@@ -1,6 +1,4 @@
 import { defineConfig } from "tsup";
-import { copyFileSync, mkdirSync, readdirSync, existsSync } from "node:fs";
-import { join } from "node:path";
 
 export default defineConfig({
   entry: {
@@ -18,16 +16,6 @@ export default defineConfig({
     "node:fs",
     "node:path",
     "node:url",
+    "node:module",
   ],
-  onSuccess: async () => {
-    mkdirSync("dist/fonts", { recursive: true });
-
-    const fontsDir = "src/fonts";
-    if (existsSync(fontsDir)) {
-      const ttfFiles = readdirSync(fontsDir).filter((f) => f.endsWith(".ttf"));
-      ttfFiles.forEach((file) => {
-        copyFileSync(join(fontsDir, file), join("dist/fonts", file));
-      });
-    }
-  },
 });

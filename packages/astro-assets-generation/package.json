@@ -27,6 +27,10 @@
     "README.md"
   ],
   "dependencies": {
+    "@fontsource/noto-sans-arabic": "5.2.8",
+    "@fontsource/noto-sans-jp": "5.2.8",
+    "@fontsource/noto-sans-kr": "5.2.8",
+    "@fontsource/noto-sans-thai": "5.2.8",
     "@takumi-rs/image-response": "1.1.2",
     "ts-pattern": "5.9.0"
   },
