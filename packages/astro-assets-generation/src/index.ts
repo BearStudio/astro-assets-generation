@@ -118,8 +118,6 @@ export {
   jsxToBase64,
 } from "./image";
 export type { AssetLoader } from "./image";
-export { Emoji } from "./components/Emoji";
-export { TextWithEmoji } from "./components/TextWithEmoji";
 export { FontWrapper } from "./components/FontWrapper";
 export type { AssetImageConfig, FontConfig, FontConfiguration } from "./types";
 export type { FontWrapperProps } from "./components/FontWrapper";

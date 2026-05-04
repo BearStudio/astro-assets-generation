@@ -1,5 +1,5 @@
 import { defineConfig } from "tsup";
-import { copyFileSync, mkdirSync, readdirSync, existsSync, rmSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 export default defineConfig({
@@ -18,12 +18,8 @@ export default defineConfig({
     "node:fs",
     "node:path",
     "node:url",
-    "@twemoji/svg",
   ],
   onSuccess: async () => {
-    copyFileSync("src/emoji-data.json", "dist/emoji-data.json");
-    rmSync("src/emoji-data.json");
-
     mkdirSync("dist/fonts", { recursive: true });
 
     const fontsDir = "src/fonts";

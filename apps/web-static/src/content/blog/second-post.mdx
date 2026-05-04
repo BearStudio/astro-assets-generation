@@ -44,27 +44,15 @@ Then use them via `FontWrapper`:
 
 ## Emoji Support
 
-Use the `Emoji` component for crisp emoji rendering at any size:
+Emojis are detected and rendered automatically inside any text node. Just write them inline:
 
 ```tsx
-import { Emoji } from "@bearstudio/astro-assets-generation";
 return (
-  <h1>
-    <span>Hello world</span> <Emoji emoji={🌍} size={64} />
-  </h1>
+  <h1>Hello 👋 World 🌍</h1>
 );
 ```
 
-Use the `TextWithEmoji` component to correctly display a text containing nested emojis
-
-```tsx
-import { TextWithEmoji } from "@bearstudio/astro-assets-generation";
-return (
-  <h1>
-    <TextWithEmoji>Hello 👋 World 🌍</TextWithEmoji>
-  </h1>
-);
-```
+Behind the scenes, Takumi pulls high-quality SVGs from the [Twemoji](https://twemoji.twitter.com/) CDN and inlines them at render time.
 
 ## Unicode Support
 

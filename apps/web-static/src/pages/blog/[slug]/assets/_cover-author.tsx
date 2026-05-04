@@ -2,7 +2,6 @@ import { getEntry } from "astro:content";
 import {
   getAstroImageBase64,
   FontWrapper,
-  TextWithEmoji,
 } from "@bearstudio/astro-assets-generation";
 
 interface PostImageParams {
@@ -99,7 +98,7 @@ export default async function CoverAuthorOGImage({ params }: PostImageParams) {
               gap: 16,
             }}
           >
-            <TextWithEmoji>{title}</TextWithEmoji>
+            {title}
           </h1>
 
           {description && (

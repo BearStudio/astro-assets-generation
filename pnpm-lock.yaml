@@ -106,9 +106,6 @@ importers:
       '@takumi-rs/image-response':
         specifier: 1.1.2
         version: 1.1.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@twemoji/svg':
-        specifier: 15.0.0
-        version: 15.0.0
       astro:
         specifier: ^5.0.0
         version: 5.16.12(@types/node@20.0.0)(@vercel/functions@2.2.13)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.55.3)(tsx@4.21.0)(typescript@5.9.3)
@@ -144,9 +141,6 @@ importers:
       tsup:
         specifier: 8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)
-      tsx:
-        specifier: 4.21.0
-        version: 4.21.0
       typescript:
         specifier: latest
         version: 5.9.3
@@ -1286,9 +1280,6 @@ packages:
 
   '@takumi-rs/wasm@1.1.2':
     resolution: {integrity: sha512-in2kLgFp6nuXie5q7blvRk8m/3UuvNDtc5SEFUh6Eu2yn20PcElj1VMdXhQhn+IN0h119BUWWdJ3AuEuh8PiDg==}
-
-  '@twemoji/svg@15.0.0':
-    resolution: {integrity: sha512-ZSPef2B6nBaYnfgdTbAy4jgW95o7pi2xPGwGCU+WMTxo7J6B1lMPTWwSq/wTuiMq+N0khQ90CcvYp1wFoQpo/w==}
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -4874,8 +4865,6 @@ snapshots:
       - react
       - react-dom
 
-  '@twemoji/svg@15.0.0': {}
-
   '@types/babel__core@7.20.5':
     dependencies:
       '@babel/parser': 7.28.6
@@ -6162,6 +6151,7 @@ snapshots:
   get-tsconfig@4.13.0:
     dependencies:
       resolve-pkg-maps: 1.0.0
+    optional: true
 
   github-slugger@2.0.0: {}
 
@@ -7600,7 +7590,8 @@ snapshots:
 
   resolve-from@5.0.0: {}
 
-  resolve-pkg-maps@1.0.0: {}
+  resolve-pkg-maps@1.0.0:
+    optional: true
 
   resolve@2.0.0-next.5:
     dependencies:
@@ -8059,6 +8050,7 @@ snapshots:
       get-tsconfig: 4.13.0
     optionalDependencies:
       fsevents: 2.3.3
+    optional: true
 
   turbo-darwin-64@2.7.5:
     optional: true

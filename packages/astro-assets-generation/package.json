@@ -5,7 +5,6 @@
   "description": "Astro integration to generate assets with Takumi",
   "scripts": {
     "dev": "tsup --watch",
-    "prebuild": "tsx src/scripts/bundle-emojis.ts",
     "build": "tsup",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepublishOnly": "pnpm build",
@@ -29,7 +28,6 @@
   ],
   "dependencies": {
     "@takumi-rs/image-response": "1.1.2",
-    "@twemoji/svg": "15.0.0",
     "ts-pattern": "5.9.0"
   },
   "optionalDependencies": {
@@ -44,7 +42,6 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "tsup": "8.5.1",
-    "tsx": "4.21.0",
     "typescript": "latest"
   },
   "peerDependencies": {

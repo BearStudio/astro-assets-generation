@@ -252,27 +252,13 @@ import { FontWrapper } from "@bearstudio/astro-assets-generation";
 
 ## Emoji Support
 
-Use the `Emoji` component for crisp emoji rendering at any size:
+Emojis are detected and rendered automatically inside any text node. Just write them inline:
 
 ```tsx
-import { Emoji } from "@bearstudio/astro-assets-generation";
-return (
-  <h1>
-    <span>Hello world</span> <Emoji emoji={🌍} size={64} />
-  </h1>
-);
+return <h1>Hello 👋 World 🌍</h1>;
 ```
 
-Use the `TextWithEmoji` component to correctly display a text containing nested emojis
-
-```tsx
-import { TextWithEmoji } from "@bearstudio/astro-assets-generation";
-return (
-  <h1>
-    <TextWithEmoji>Hello 👋 World 🌍</TextWithEmoji>
-  </h1>
-);
-```
+The library uses [Twemoji](https://twemoji.twitter.com/) SVGs by default, fetched from a CDN at render time.
 
 ## Styling
 
@@ -412,14 +398,6 @@ const base64 = await jsxToBase64(<MyComponent />, { width: 600, height: 300 });
 
 ### Components
 
-#### `<Emoji emoji="🚀" size={64} />`
-
-Renders emojis using Twemoji SVGs.
-
-#### `<TextWithEmoji>`
-
-Renders a text string containing emojis, automatically splitting and rendering each emoji with Twemoji SVGs at the correct size.
-
 #### `<FontWrapper fontFamily="Geist">`
 
 Wraps content with automatic font fallback support.
@@ -479,10 +457,7 @@ Return `null` or `undefined` to fall back to fetch.
 
 ```tsx
 // src/pages/blog/[slug]/assets/_og-image.tsx
-import {
-  FontWrapper,
-  TextWithEmoji,
-} from "@bearstudio/astro-assets-generation";
+import { FontWrapper } from "@bearstudio/astro-assets-generation";
 import { getEntry } from "astro:content";
 
 export const config = { width: 1200, height: 630 };
@@ -514,7 +489,7 @@ export default async function BlogOgImage({
           }}
         >
           <h1 style={{ color: "white", fontSize: 72, fontWeight: "bold" }}>
-            <TextWithEmoji>{post.data.title}</TextWithEmoji>
+            {post.data.title}
           </h1>
         </div>
         <div

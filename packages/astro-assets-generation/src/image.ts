@@ -170,6 +170,7 @@ export async function PNG(component: JSX.Element, config: AssetImageConfig) {
     width: config.width,
     height: config.height,
     fonts,
+    emoji: "twemoji",
   });
 
   return response.arrayBuffer();
@@ -183,6 +184,7 @@ export async function JPEG(component: JSX.Element, config: AssetImageConfig) {
     height: config.height,
     fonts,
     format: "jpeg",
+    emoji: "twemoji",
   });
 
   return response.arrayBuffer();
