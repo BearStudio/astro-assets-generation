@@ -44,6 +44,12 @@ importers:
       '@tailwindcss/vite':
         specifier: 4.1.18
         version: 4.1.18(vite@6.4.1(@types/node@22.15.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0))
+      '@takumi-rs/core':
+        specifier: 0.65.0
+        version: 0.65.0
+      '@takumi-rs/image-response':
+        specifier: 0.65.0
+        version: 0.65.0
       astro:
         specifier: 5.16.12
         version: 5.16.12(@types/node@22.15.3)(@vercel/functions@2.2.13)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.55.3)(tsx@4.21.0)(typescript@5.9.3)
