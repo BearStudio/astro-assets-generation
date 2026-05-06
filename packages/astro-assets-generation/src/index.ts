@@ -121,3 +121,4 @@ export type { AssetLoader } from "./image";
 export { FontWrapper } from "./components/FontWrapper";
 export type { AssetImageConfig, FontConfig, FontConfiguration } from "./types";
 export type { FontWrapperProps } from "./components/FontWrapper";
+export { astroAssetsGeneration } from "./integration";

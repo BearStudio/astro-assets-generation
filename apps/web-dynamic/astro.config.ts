@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import mdx from "@astrojs/mdx";
 import node from "@astrojs/node";
 import vercel from "@astrojs/vercel";
+import { astroAssetsGeneration } from "@bearstudio/astro-assets-generation";
 
 const adapter =
   process.argv[3] === "--node" || process.argv[4] === "--node"
@@ -18,14 +19,7 @@ export default defineConfig({
   site,
   vite: {
     plugins: [tailwindcss()],
-    optimizeDeps: {
-      exclude: ["@takumi-rs/image-response"],
-    },
-    ssr: {
-      external: ["@takumi-rs/image-response"],
-      noExternal: ["@bearstudio/astro-assets-generation"],
-    },
   },
-  integrations: [react(), mdx()],
+  integrations: [react(), mdx(), astroAssetsGeneration()],
   adapter,
 });
