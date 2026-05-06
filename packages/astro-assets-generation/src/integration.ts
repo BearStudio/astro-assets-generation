@@ -5,57 +5,56 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
-const takumiNativeBindings = [
-  {
-    packageName: "@takumi-rs/core-linux-x64-gnu",
-    binding: "core.linux-x64-gnu.node",
-  },
-  {
-    packageName: "@takumi-rs/core-linux-arm64-gnu",
-    binding: "core.linux-arm64-gnu.node",
-  },
-];
+const takumiNativePackage = "@takumi-rs/core-linux-x64-gnu";
+const takumiNativeBinding = "core.linux-x64-gnu.node";
+
+const resolvePackage = (packageName: string) => {
+  try {
+    return require.resolve(packageName);
+  } catch {
+    return undefined;
+  }
+};
 
 const getTakumiNativeFiles = (root: URL) => {
+  const packageDirName = takumiNativePackage.split("/").at(-1);
+  const candidatePackageDirs = [
+    join(
+      fileURLToPath(root),
+      "node_modules",
+      ...takumiNativePackage.split("/"),
+    ),
+  ];
+
+  for (const nodeModulesDir of require.resolve.paths(takumiNativePackage) ??
+    []) {
+    candidatePackageDirs.push(
+      join(nodeModulesDir, ...takumiNativePackage.split("/")),
+    );
+  }
+
+  const takumiCorePath = resolvePackage("@takumi-rs/core");
+
+  if (takumiCorePath && packageDirName) {
+    const coreScopeDir = dirname(dirname(dirname(takumiCorePath)));
+
+    candidatePackageDirs.push(join(coreScopeDir, packageDirName));
+  }
+
   return [
     ...new Set(
-      takumiNativeBindings.flatMap(({ packageName, binding }) => {
-        const packageDirName = packageName.split("/").at(-1);
-        const candidatePackageDirs = [
-          join(fileURLToPath(root), "node_modules", ...packageName.split("/")),
+      candidatePackageDirs.flatMap((packageDir) => {
+        const files = [
+          join(packageDir, takumiNativeBinding),
+          join(packageDir, "package.json"),
         ];
 
-        for (const nodeModulesDir of require.resolve.paths(packageName) ?? []) {
-          candidatePackageDirs.push(
-            join(nodeModulesDir, ...packageName.split("/")),
-          );
-        }
-
-        try {
-          const coreScopeDir = dirname(
-            dirname(dirname(require.resolve("@takumi-rs/core"))),
-          );
-
-          if (packageDirName) {
-            candidatePackageDirs.push(join(coreScopeDir, packageDirName));
+        return files.flatMap((file) => {
+          if (!existsSync(file)) {
+            return [];
           }
-        } catch {
-          // The integration can still be evaluated in installs that do not use Takumi.
-        }
 
-        return candidatePackageDirs.flatMap((packageDir) => {
-          const files = [
-            join(packageDir, binding),
-            join(packageDir, "package.json"),
-          ];
-
-          return files.flatMap((file) => {
-            if (!existsSync(file)) {
-              return [];
-            }
-
-            return [file, realpathSync(file)];
-          });
+          return [file, realpathSync(file)];
         });
       }),
     ),
@@ -77,10 +76,6 @@ export function astroAssetsGeneration(): AstroIntegration {
       "astro:config:setup": ({ config, updateConfig }) => {
         updateConfig({
           vite: {
-            // @astrojs/vercel reads vite.assetsInclude, globs the matching files,
-            // and adds them to nft's includeFiles. nft can't trace napi-rs
-            // platform-conditional requires, so we force-include the linux
-            // native bindings this way.
             assetsInclude: [
               ...toArray(config.vite.assetsInclude),
               ...getTakumiNativeFiles(config.root),

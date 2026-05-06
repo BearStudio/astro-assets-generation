@@ -27,28 +27,16 @@ Update your `astro.config.mjs`:
 ```javascript
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
+import { astroAssetsGeneration } from "@bearstudio/astro-assets-generation";
 
 export default defineConfig({
-  vite: {
-    optimizeDeps: {
-      exclude: [
-        "@takumi-rs/image-response",
-        "@takumi-rs/core",
-        "@takumi-rs/helpers",
-      ],
-    },
-    ssr: {
-      noExternal: [
-        "@takumi-rs/image-response",
-        "@takumi-rs/core",
-        "@takumi-rs/helpers",
-        "@bearstudio/astro-assets-generation",
-      ],
-    },
-  },
-  integrations: [react()],
+  integrations: [react(), astroAssetsGeneration()],
 });
 ```
+
+The integration configures the Takumi Vite/SSR settings for you. On Vercel, it
+also includes Takumi's native Linux binding in the serverless function output,
+so consumers do not need custom `includeFiles` config.
 
 ### 2. Configure the Library
 
@@ -166,26 +154,10 @@ pnpm astro add node
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 import vercel from "@astrojs/vercel";
+import { astroAssetsGeneration } from "@bearstudio/astro-assets-generation";
 
 export default defineConfig({
-  vite: {
-    optimizeDeps: {
-      exclude: [
-        "@takumi-rs/image-response",
-        "@takumi-rs/core",
-        "@takumi-rs/helpers",
-      ],
-    },
-    ssr: {
-      noExternal: [
-        "@takumi-rs/image-response",
-        "@takumi-rs/core",
-        "@takumi-rs/helpers",
-        "@bearstudio/astro-assets-generation",
-      ],
-    },
-  },
-  integrations: [react()],
+  integrations: [react(), astroAssetsGeneration()],
   adapter: vercel(),
 });
 ```
@@ -215,11 +187,22 @@ images and fonts from `siteUrl` at runtime, and the `disk-loader` import is no
 longer needed. Keeping it in serverless builds causes file tracers like
 `@vercel/nft` to bundle your entire `dist/` into the function output.
 
+### Vercel
+
+No Vercel-specific app config is required beyond adding the Vercel adapter and
+`astroAssetsGeneration()`. The integration handles Takumi's native Node binding
+for the Vercel Linux runtime.
+
 ## Font Management
 
-### Built-in Fonts
+### Built-in Fallback Fonts
 
-The library automatically includes fonts for Thai, Japanese, Korean, and Arabic. These are used as fallbacks.
+The library provides default fallback font definitions for Thai, Japanese,
+Korean, and Arabic. These fonts are loaded from a CDN at render time, so the
+consumer app does not need to install or ship non-Latin font packages.
+
+If your deployment cannot rely on CDN access, register your own fonts with
+`customFonts`.
 
 ### Custom Fonts
 
@@ -297,10 +280,7 @@ const avatarBase64 = await getAstroImageBase64(author.data.avatar);
 ### External Images
 
 ```tsx
-<img
-  src="https://example.com/image.jpg"
-  style={{ width: 256, height: 256 }}
-/>
+<img src="https://example.com/image.jpg" style={{ width: 256, height: 256 }} />
 ```
 
 ### JSX to Base64
@@ -445,7 +425,13 @@ Return `null` or `undefined` to fall back to fetch.
 
 - Verify font name matches internal font name
 - Check `siteUrl` is correct in production
-- Ensure fonts are accessible from production URL
+- Ensure custom font URLs are accessible from production URL
+- Ensure the deployment environment can reach the CDN for built-in fallback fonts
+
+**Vercel cannot load Takumi native bindings?**
+
+- Ensure `astroAssetsGeneration()` is present in `astro.config`
+- Ensure optional dependencies are installed during deployment
 
 **Styling issues?**
 
