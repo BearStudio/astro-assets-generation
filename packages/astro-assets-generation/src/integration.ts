@@ -26,6 +26,8 @@ const getTakumiNativeFiles = (root: URL) => {
     ),
   ];
 
+  // The native package may be installed either from the consuming app or from
+  // this library's optional dependency, depending on the package manager layout.
   for (const nodeModulesDir of require.resolve.paths(takumiNativePackage) ??
     []) {
     candidatePackageDirs.push(
@@ -38,6 +40,8 @@ const getTakumiNativeFiles = (root: URL) => {
   if (takumiCorePath && packageDirName) {
     const coreScopeDir = dirname(dirname(dirname(takumiCorePath)));
 
+    // Takumi's loader resolves the platform package from @takumi-rs/core first.
+    // With pnpm, that can live inside core's virtual node_modules directory.
     candidatePackageDirs.push(join(coreScopeDir, packageDirName));
   }
 
@@ -54,6 +58,8 @@ const getTakumiNativeFiles = (root: URL) => {
             return [];
           }
 
+          // Include both the symlink and the real file so pnpm links remain valid
+          // after @astrojs/vercel copies assets into the serverless function.
           return [file, realpathSync(file)];
         });
       }),
@@ -76,6 +82,9 @@ export function astroAssetsGeneration(): AstroIntegration {
       "astro:config:setup": ({ config, updateConfig }) => {
         updateConfig({
           vite: {
+            // @astrojs/vercel forwards vite.assetsInclude into its file tracer.
+            // This keeps the Takumi native binding in the function bundle without
+            // making app consumers configure Vercel includeFiles themselves.
             assetsInclude: [
               ...toArray(config.vite.assetsInclude),
               ...getTakumiNativeFiles(config.root),
