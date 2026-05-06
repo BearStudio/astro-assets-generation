@@ -117,8 +117,8 @@ export {
   getConfiguredFonts,
   jsxToBase64,
 } from "./image";
-export { Emoji } from "./components/Emoji";
-export { TextWithEmoji } from "./components/TextWithEmoji";
+export type { AssetLoader } from "./image";
 export { FontWrapper } from "./components/FontWrapper";
 export type { AssetImageConfig, FontConfig, FontConfiguration } from "./types";
 export type { FontWrapperProps } from "./components/FontWrapper";
+export { astroAssetsGeneration } from "./integration";

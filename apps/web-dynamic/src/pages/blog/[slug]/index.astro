@@ -19,7 +19,7 @@ if (!post) {
 
 const { Content } = await render(post);
 
-const ogImageUrl = new URL(`${slug}/assets/cover-author.png`, Astro.url);
+const ogImageUrl = new URL(`/blog/${slug}/assets/cover-author.png`, Astro.url);
 ---
 
 <Layout title={post.data.title} ogImage={ogImageUrl.toString()}>

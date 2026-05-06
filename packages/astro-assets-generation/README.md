@@ -27,28 +27,16 @@ Update your `astro.config.mjs`:
 ```javascript
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
+import { astroAssetsGeneration } from "@bearstudio/astro-assets-generation";
 
 export default defineConfig({
-  vite: {
-    optimizeDeps: {
-      exclude: [
-        "@takumi-rs/image-response",
-        "@takumi-rs/core",
-        "@takumi-rs/helpers",
-      ],
-    },
-    ssr: {
-      noExternal: [
-        "@takumi-rs/image-response",
-        "@takumi-rs/core",
-        "@takumi-rs/helpers",
-        "@bearstudio/astro-assets-generation",
-      ],
-    },
-  },
-  integrations: [react()],
+  integrations: [react(), astroAssetsGeneration()],
 });
 ```
+
+The integration configures the Takumi Vite/SSR settings for you. On Vercel, it
+also includes Takumi's native Linux binding in the serverless function output,
+so consumers do not need custom `includeFiles` config.
 
 ### 2. Configure the Library
 
@@ -56,6 +44,7 @@ Create a configuration file (e.g., `src/lib/assets.ts`):
 
 ```typescript
 import { configure } from "@bearstudio/astro-assets-generation";
+import { diskLoader } from "@bearstudio/astro-assets-generation/disk-loader";
 
 configure({
   debugBackground: "#0a0a0a",
@@ -70,6 +59,9 @@ configure({
       style: "normal",
     },
   ],
+  // Required for `output: 'static'` (prerender has no server). Omit for SSR
+  // adapters — the library will fetch from `siteUrl` instead.
+  loadAsset: diskLoader(),
 });
 ```
 
@@ -162,26 +154,10 @@ pnpm astro add node
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 import vercel from "@astrojs/vercel";
+import { astroAssetsGeneration } from "@bearstudio/astro-assets-generation";
 
 export default defineConfig({
-  vite: {
-    optimizeDeps: {
-      exclude: [
-        "@takumi-rs/image-response",
-        "@takumi-rs/core",
-        "@takumi-rs/helpers",
-      ],
-    },
-    ssr: {
-      noExternal: [
-        "@takumi-rs/image-response",
-        "@takumi-rs/core",
-        "@takumi-rs/helpers",
-        "@bearstudio/astro-assets-generation",
-      ],
-    },
-  },
-  integrations: [react()],
+  integrations: [react(), astroAssetsGeneration()],
   adapter: vercel(),
 });
 ```
@@ -203,11 +179,30 @@ export const GET: APIRoute = apiImageEndpoint(
 );
 ```
 
+### Drop `loadAsset` for serverless deployments
+
+When you ship to a serverless adapter (Vercel, Netlify, Cloudflare…), remove
+`loadAsset: diskLoader()` from your `configure()` call. The library will fetch
+images and fonts from `siteUrl` at runtime, and the `disk-loader` import is no
+longer needed. Keeping it in serverless builds causes file tracers like
+`@vercel/nft` to bundle your entire `dist/` into the function output.
+
+### Vercel
+
+No Vercel-specific app config is required beyond adding the Vercel adapter and
+`astroAssetsGeneration()`. The integration handles Takumi's native Node binding
+for the Vercel Linux runtime.
+
 ## Font Management
 
-### Built-in Fonts
+### Built-in Fallback Fonts
 
-The library automatically includes fonts for Thai, Japanese, Korean, and Arabic. These are used as fallbacks.
+The library provides default fallback font definitions for Thai, Japanese,
+Korean, and Arabic. These fonts are loaded from a CDN at render time, so the
+consumer app does not need to install or ship non-Latin font packages.
+
+If your deployment cannot rely on CDN access, register your own fonts with
+`customFonts`.
 
 ### Custom Fonts
 
@@ -240,27 +235,13 @@ import { FontWrapper } from "@bearstudio/astro-assets-generation";
 
 ## Emoji Support
 
-Use the `Emoji` component for crisp emoji rendering at any size:
+Emojis are detected and rendered automatically inside any text node. Just write them inline:
 
 ```tsx
-import { Emoji } from "@bearstudio/astro-assets-generation";
-return (
-  <h1>
-    <span>Hello world</span> <Emoji emoji={🌍} size={64} />
-  </h1>
-);
+return <h1>Hello 👋 World 🌍</h1>;
 ```
 
-Use the `TextWithEmoji` component to correctly display a text containing nested emojis
-
-```tsx
-import { TextWithEmoji } from "@bearstudio/astro-assets-generation";
-return (
-  <h1>
-    <TextWithEmoji>Hello 👋 World 🌍</TextWithEmoji>
-  </h1>
-);
-```
+The library uses [Twemoji](https://twemoji.twitter.com/) SVGs by default, fetched from a CDN at render time.
 
 ## Styling
 
@@ -299,10 +280,7 @@ const avatarBase64 = await getAstroImageBase64(author.data.avatar);
 ### External Images
 
 ```tsx
-<img
-  src="https://example.com/image.jpg"
-  style={{ width: 256, height: 256 }}
-/>
+<img src="https://example.com/image.jpg" style={{ width: 256, height: 256 }} />
 ```
 
 ### JSX to Base64
@@ -336,8 +314,28 @@ configure({
   customFonts: [
     /* ... */
   ],
+  // Optional. Resolves `getAstroImageBase64` images and `/`-prefixed font
+  // URLs before falling back to fetch. Required for `output: 'static'`.
+  loadAsset: diskLoader(),
 });
 ```
+
+#### `diskLoader(options?)`
+
+Imported from `@bearstudio/astro-assets-generation/disk-loader`. Returns an
+`AssetLoader` that reads a request URL from disk, looking under
+`process.cwd()/dist/` then `process.cwd()/public/` by default.
+
+```typescript
+import { diskLoader } from "@bearstudio/astro-assets-generation/disk-loader";
+
+loadAsset: diskLoader();
+loadAsset: diskLoader({ directories: ["dist", "public", "custom"] });
+```
+
+Lives in a sub-export so its `process.cwd()` references stay out of the main
+entry — without that split, `@vercel/nft` would trace `dist/**` into
+serverless function bundles.
 
 #### `apiImageEndpoint(modules)`
 
@@ -380,14 +378,6 @@ const base64 = await jsxToBase64(<MyComponent />, { width: 600, height: 300 });
 
 ### Components
 
-#### `<Emoji emoji="🚀" size={64} />`
-
-Renders emojis using Twemoji SVGs.
-
-#### `<TextWithEmoji>`
-
-Renders a text string containing emojis, automatically splitting and rendering each emoji with Twemoji SVGs at the correct size.
-
 #### `<FontWrapper fontFamily="Geist">`
 
 Wraps content with automatic font fallback support.
@@ -415,6 +405,14 @@ interface FontConfig {
 }
 ```
 
+#### `AssetLoader`
+
+```typescript
+type AssetLoader = (url: string) => Promise<Buffer | null | undefined>;
+```
+
+Return `null` or `undefined` to fall back to fetch.
+
 ## Troubleshooting
 
 **Images not generating?**
@@ -427,7 +425,13 @@ interface FontConfig {
 
 - Verify font name matches internal font name
 - Check `siteUrl` is correct in production
-- Ensure fonts are accessible from production URL
+- Ensure custom font URLs are accessible from production URL
+- Ensure the deployment environment can reach the CDN for built-in fallback fonts
+
+**Vercel cannot load Takumi native bindings?**
+
+- Ensure `astroAssetsGeneration()` is present in `astro.config`
+- Ensure optional dependencies are installed during deployment
 
 **Styling issues?**
 
@@ -439,10 +443,7 @@ interface FontConfig {
 
 ```tsx
 // src/pages/blog/[slug]/assets/_og-image.tsx
-import {
-  FontWrapper,
-  TextWithEmoji,
-} from "@bearstudio/astro-assets-generation";
+import { FontWrapper } from "@bearstudio/astro-assets-generation";
 import { getEntry } from "astro:content";
 
 export const config = { width: 1200, height: 630 };
@@ -474,7 +475,7 @@ export default async function BlogOgImage({
           }}
         >
           <h1 style={{ color: "white", fontSize: 72, fontWeight: "bold" }}>
-            <TextWithEmoji>{post.data.title}</TextWithEmoji>
+            {post.data.title}
           </h1>
         </div>
         <div

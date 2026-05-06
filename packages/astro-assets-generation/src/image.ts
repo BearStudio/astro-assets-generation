@@ -8,11 +8,20 @@ import type { JSX } from "react";
 import type { AssetImageConfig, FontConfig } from "./types";
 import { getAllFonts } from "./theme";
 
+/**
+ * Optional override called before fetching `siteUrl + url` for asset images
+ * and `/`-prefixed font URLs. Return `null` or `undefined` to fall back to
+ * fetch. Useful for `output: 'static'` builds — see `diskLoader` from
+ * `@bearstudio/astro-assets-generation/disk-loader`.
+ */
+export type AssetLoader = (url: string) => Promise<Buffer | null | undefined>;
+
 let libraryConfig = {
   debugBackground: "#0a0a0a",
   siteUrl: "",
   isDev: true,
   customFonts: [] as FontConfig[],
+  loadAsset: undefined as AssetLoader | undefined,
 };
 
 /**
@@ -61,19 +70,11 @@ async function loadFontData(font: FontConfig): Promise<Buffer> {
     return Buffer.from(await res.arrayBuffer());
   }
 
-  // If URL starts with "/" (web path), handle as public directory path.
-  // Always try filesystem first (works in dev, build, and SSR runtime),
-  // then fall back to HTTP (SSR runtime when files aren't on disk).
+  // Web path (resolved against siteUrl). Defer to loadAsset if provided.
   if (font.url.startsWith("/")) {
-    const relativePath = font.url.replace(/^\//, "");
-    for (const dir of ["public", "dist"]) {
-      try {
-        return await fs.readFile(
-          path.resolve(process.cwd(), dir, relativePath)
-        );
-      } catch {
-        continue;
-      }
+    if (libraryConfig.loadAsset) {
+      const fromLoader = await libraryConfig.loadAsset(font.url);
+      if (fromLoader) return fromLoader;
     }
     const url = new URL(font.url, libraryConfig.siteUrl);
     const res = await fetch(url);
@@ -169,6 +170,7 @@ export async function PNG(component: JSX.Element, config: AssetImageConfig) {
     width: config.width,
     height: config.height,
     fonts,
+    emoji: "twemoji",
   });
 
   return response.arrayBuffer();
@@ -182,6 +184,7 @@ export async function JPEG(component: JSX.Element, config: AssetImageConfig) {
     height: config.height,
     fonts,
     format: "jpeg",
+    emoji: "twemoji",
   });
 
   return response.arrayBuffer();
@@ -318,42 +321,38 @@ export function getImageNameFromTsxPath(path: string) {
     .replace(/^_/, "");
 }
 
-function getAstroImagePath(image: { src: string }) {
-  return libraryConfig.isDev
-    ? path.resolve(image.src.replace(/\?.*/, "").replace("/@fs", ""))
-    : image.src;
+async function readDevAstroImage(image: { src: string }): Promise<Buffer> {
+  // Vite dev: image.src is `/@fs/<absolute-path>?<query>`.
+  return fs.readFile(
+    path.resolve(image.src.replace(/\?.*/, "").replace("/@fs", ""))
+  );
+}
+
+async function fetchAstroImage(image: { src: string }): Promise<Buffer> {
+  const res = await fetch(new URL(image.src, libraryConfig.siteUrl));
+  if (!res.ok) {
+    throw new Error(`Failed to fetch image: ${image.src}`);
+  }
+  return Buffer.from(await res.arrayBuffer());
 }
 
 async function getAstroImageBuffer(image: { src: string }) {
   const fileExtension = RegExp(/.(jpg|jpeg|png)$/)
     .exec(image.src)?.[0]
     .slice(1);
-  const fileToRead = getAstroImagePath(image);
+
+  let buffer: Buffer | null | undefined;
+  if (libraryConfig.isDev) {
+    buffer = await readDevAstroImage(image);
+  } else {
+    if (libraryConfig.loadAsset) {
+      buffer = await libraryConfig.loadAsset(image.src);
+    }
+    buffer ??= await fetchAstroImage(image);
+  }
 
   return {
-    buffer: await match(libraryConfig.isDev)
-      .with(true, async () => await fs.readFile(fileToRead))
-      .with(false, async () => {
-        // Try reading from dist directory first (build-time static generation)
-        const distPath = path.resolve(
-          process.cwd(),
-          "dist",
-          fileToRead.replace(/^\//, "")
-        );
-        try {
-          return await fs.readFile(distPath);
-        } catch {
-          // Fall back to HTTP fetch (SSR runtime)
-        }
-        const res = await fetch(new URL(fileToRead, libraryConfig.siteUrl));
-
-        if (!res.ok) {
-          throw new Error(`Failed to fetch image: ${fileToRead}`);
-        }
-
-        return Buffer.from(await res.arrayBuffer());
-      })
-      .exhaustive(),
+    buffer,
     fileType: match(fileExtension)
       .with("jpg", "jpeg", () => "jpeg")
       .with("png", () => "png")

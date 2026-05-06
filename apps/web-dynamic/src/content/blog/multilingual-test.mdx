@@ -1,0 +1,40 @@
+---
+title: "Multilingual Magic ✨ — ไทย 日本語 한국어 العربية"
+description: "Generate OG images with Thai, Japanese, Korean and Arabic text out of the box, no extra font config needed."
+date: 2026-05-04
+author: john-doe
+tags: ["fonts", "i18n", "internationalization"]
+---
+
+# Multilingual Out of the Box
+
+`@bearstudio/astro-assets-generation` ships with sensible default fonts so that **non-Latin scripts render correctly without any setup**. Drop a string of Thai, Japanese, Korean or Arabic text in your template and it just works.
+
+## Supported scripts by default
+
+| Script                | Default font     |
+| --------------------- | ---------------- |
+| Thai (สวัสดี)         | Noto Sans Thai   |
+| Japanese (こんにちは) | Noto Sans JP     |
+| Korean (안녕하세요)   | Noto Sans KR     |
+| Arabic (مرحبا)        | Noto Sans Arabic |
+
+These fallback fonts are provided by the library, so you don't need to install font packages in your app to render these scripts.
+
+## Mixing scripts and emojis
+
+Wrap your content with `FontWrapper` to set the primary (Latin) font, and let the renderer fall back to the library defaults for other scripts and emojis:
+
+```tsx
+import { FontWrapper } from "@bearstudio/astro-assets-generation";
+
+<FontWrapper fontFamily="Geist">
+  <h1>Hello 👋 World — สวัสดี 日本 한국 مرحبا 🌍</h1>
+</FontWrapper>;
+```
+
+The renderer picks the right glyph for each character automatically — your primary font for Latin, Noto Sans Thai/JP/KR/Arabic for the other scripts, and Twemoji for emojis.
+
+## Going further
+
+If you need a different weight, style, or a script that isn't in the defaults (Devanagari, Greek, Cyrillic…), register your own font with `configure({ customFonts: [...] })` — see [Custom Fonts and Emoji Support](/blog/second-post) for the full setup.

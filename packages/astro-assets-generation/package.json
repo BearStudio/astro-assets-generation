@@ -1,12 +1,11 @@
 {
   "name": "@bearstudio/astro-assets-generation",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Astro integration to generate assets with Takumi",
   "scripts": {
-    "dev": "tsup src/index.ts --format esm --dts --watch",
-    "prebuild": "tsx src/scripts/bundle-emojis.ts",
-    "build": "tsup src/index.ts --format esm --dts --minify",
+    "dev": "tsup --watch",
+    "build": "tsup",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepublishOnly": "pnpm build",
     "npm:publish": "pnpm publish --access public",
@@ -17,6 +16,10 @@
     ".": {
       "types": "./src/index.ts",
       "import": "./dist/index.js"
+    },
+    "./disk-loader": {
+      "types": "./src/disk-loader.ts",
+      "import": "./dist/disk-loader.js"
     }
   },
   "files": [
@@ -24,9 +27,11 @@
     "README.md"
   ],
   "dependencies": {
-    "@takumi-rs/image-response": "0.65.0",
-    "@twemoji/svg": "15.0.0",
+    "@takumi-rs/image-response": "1.1.2",
     "ts-pattern": "5.9.0"
+  },
+  "optionalDependencies": {
+    "@takumi-rs/core-linux-x64-gnu": "1.1.2"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
@@ -36,7 +41,6 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "tsup": "8.5.1",
-    "tsx": "4.21.0",
     "typescript": "latest"
   },
   "peerDependencies": {
