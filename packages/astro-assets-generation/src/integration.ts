@@ -1,36 +1,74 @@
 import type { AstroIntegration } from "astro";
-import { cpSync, existsSync, readdirSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, realpathSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-// nft (used by @astrojs/vercel) can't statically trace napi-rs platform-conditional
-// require() calls, so the native .node bindings are missing from the function bundle.
-// We fix this by copying them directly after the Vercel adapter finishes.
-function injectTakumiBindings() {
-  if (process.platform !== "linux") return;
+const require = createRequire(import.meta.url);
+const takumiNativeBindings = [
+  {
+    packageName: "@takumi-rs/core-linux-x64-gnu",
+    binding: "core.linux-x64-gnu.node",
+  },
+  {
+    packageName: "@takumi-rs/core-linux-arm64-gnu",
+    binding: "core.linux-arm64-gnu.node",
+  },
+];
 
-  const functionsDir = resolve(process.cwd(), ".vercel", "output", "functions");
-  if (!existsSync(functionsDir)) return;
+const getTakumiNativeFiles = (root: URL) => {
+  return [
+    ...new Set(
+      takumiNativeBindings.flatMap(({ packageName, binding }) => {
+        const packageDirName = packageName.split("/").at(-1);
+        const candidatePackageDirs = [
+          join(fileURLToPath(root), "node_modules", ...packageName.split("/")),
+        ];
 
-  const bindings = ["core-linux-x64-gnu", "core-linux-arm64-gnu"];
+        for (const nodeModulesDir of require.resolve.paths(packageName) ?? []) {
+          candidatePackageDirs.push(
+            join(nodeModulesDir, ...packageName.split("/")),
+          );
+        }
 
-  for (const entry of readdirSync(functionsDir, { withFileTypes: true })) {
-    if (!entry.isDirectory() || !entry.name.endsWith(".func")) continue;
+        try {
+          const coreScopeDir = dirname(
+            dirname(dirname(require.resolve("@takumi-rs/core"))),
+          );
 
-    for (const binding of bindings) {
-      const src = resolve(process.cwd(), "node_modules", "@takumi-rs", binding);
-      if (!existsSync(src)) continue;
+          if (packageDirName) {
+            candidatePackageDirs.push(join(coreScopeDir, packageDirName));
+          }
+        } catch {
+          // The integration can still be evaluated in installs that do not use Takumi.
+        }
 
-      const dest = resolve(
-        functionsDir,
-        entry.name,
-        "node_modules",
-        "@takumi-rs",
-        binding
-      );
-      cpSync(src, dest, { recursive: true, dereference: true });
-    }
+        return candidatePackageDirs.flatMap((packageDir) => {
+          const files = [
+            join(packageDir, binding),
+            join(packageDir, "package.json"),
+          ];
+
+          return files.flatMap((file) => {
+            if (!existsSync(file)) {
+              return [];
+            }
+
+            return [file, realpathSync(file)];
+          });
+        });
+      }),
+    ),
+  ];
+};
+
+const toArray = <T>(value: T | T[] | undefined): T[] => {
+  if (value === undefined) {
+    return [];
   }
-}
+
+  return Array.isArray(value) ? value : [value];
+};
 
 export function astroAssetsGeneration(): AstroIntegration {
   return {
@@ -39,6 +77,14 @@ export function astroAssetsGeneration(): AstroIntegration {
       "astro:config:setup": ({ config, updateConfig }) => {
         updateConfig({
           vite: {
+            // @astrojs/vercel reads vite.assetsInclude, globs the matching files,
+            // and adds them to nft's includeFiles. nft can't trace napi-rs
+            // platform-conditional requires, so we force-include the linux
+            // native bindings this way.
+            assetsInclude: [
+              ...toArray(config.vite.assetsInclude),
+              ...getTakumiNativeFiles(config.root),
+            ],
             optimizeDeps: { exclude: ["@takumi-rs/image-response"] },
             ssr: {
               external: ["@takumi-rs/image-response"],
@@ -46,25 +92,6 @@ export function astroAssetsGeneration(): AstroIntegration {
             },
           },
         });
-
-        // Wrap the Vercel adapter's astro:build:done so our injection runs
-        // after nft has already written the function bundle.
-        const adapter = config.adapter;
-        if (adapter?.name === "@astrojs/vercel") {
-          const originalBuildDone = adapter.hooks?.["astro:build:done"];
-          updateConfig({
-            adapter: {
-              ...adapter,
-              hooks: {
-                ...adapter.hooks,
-                "astro:build:done": async (options: any) => {
-                  await (originalBuildDone as any)?.(options);
-                  injectTakumiBindings();
-                },
-              },
-            },
-          });
-        }
       },
     },
   };
