@@ -1,6 +1,6 @@
 {
   "name": "@bearstudio/astro-assets-generation",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Astro integration to generate assets with Takumi",
   "scripts": {
