@@ -1,7 +1,18 @@
+export type EmojiType =
+  | "twemoji"
+  | "blobmoji"
+  | "noto"
+  | "openmoji"
+  | "fluent"
+  | "fluentFlat"
+  | "from-font";
+
 export interface AssetImageConfig {
   width: number;
   height: number;
   debugScale?: number;
+  /** Emoji provider used when rendering emoji characters. Defaults to "twemoji". */
+  emoji?: EmojiType;
 }
 
 export interface FontConfig {

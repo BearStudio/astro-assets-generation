@@ -27,11 +27,10 @@
     "README.md"
   ],
   "dependencies": {
-    "@takumi-rs/image-response": "1.1.2",
-    "ts-pattern": "5.9.0"
+    "takumi-js": "2.0.0-beta.10"
   },
   "optionalDependencies": {
-    "@takumi-rs/core-linux-x64-gnu": "1.1.2"
+    "@takumi-rs/core-linux-x64-gnu": "2.0.0-beta.10"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

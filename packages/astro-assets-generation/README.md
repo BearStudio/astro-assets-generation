@@ -4,13 +4,13 @@ Generate dynamic images (OG images, social media cards, etc.) using React compon
 
 ## Features
 
-- 🎨 Design images with React components and JSX
-- 🖼️ Generate PNG, JPEG, or JPG images
-- 🐛 Debug mode to preview templates in browser
-- 😀 Built-in emoji support with Twemoji
-- 🌍 Automatic multilingual support (Thai, Japanese, Korean, Arabic)
-- 🔤 Custom fonts with automatic fallbacks
-- ⚡ Fast Rust-based rendering
+- Design images with React components and JSX
+- Generate PNG, JPEG, or JPG images
+- Debug mode to preview templates in browser
+- Built-in emoji support with configurable provider (Twemoji by default)
+- Automatic multilingual support (Thai, Japanese, Korean, Arabic)
+- Custom fonts with lazy loading and automatic subsetting
+- Fast Rust-based rendering via takumi-js v2
 
 ## Installation
 
@@ -59,6 +59,7 @@ configure({
       style: "normal",
     },
   ],
+  // emoji: "twemoji", // Optional. Default: "twemoji"
   // Required for `output: 'static'` (prerender has no server). Omit for SSR
   // adapters — the library will fetch from `siteUrl` instead.
   loadAsset: diskLoader(),
@@ -198,10 +199,12 @@ for the Vercel Linux runtime.
 ### Built-in Fallback Fonts
 
 The library provides default fallback font definitions for Thai, Japanese,
-Korean, and Arabic. These fonts are loaded from a CDN at render time, so the
-consumer app does not need to install or ship non-Latin font packages.
+Korean, and Arabic. These fonts are loaded from a CDN on first render and
+cached automatically — no manual cache management required. Font subsetting
+is active by default: Takumi only processes the glyphs present in the rendered
+content, so loading a full CJK font only costs what the content actually uses.
 
-If your deployment cannot rely on CDN access, register your own fonts with
+If your deployment cannot rely on CDN access, register your own fonts via
 `customFonts`.
 
 ### Custom Fonts
@@ -209,24 +212,36 @@ If your deployment cannot rely on CDN access, register your own fonts with
 Add fonts in your configuration:
 
 ```typescript
-const customFonts: FontConfig[] = [
-  {
-    name: "Geist", // Must match font's internal name
-    url: "/fonts/Geist.ttf", // Path or URL
-    weight: 400,
-    style: "normal",
-  },
-];
+configure({
+  customFonts: [
+    {
+      name: "Tomorrow", // Name used in CSS font-family declarations
+      url: "/fonts/Tomorrow-Regular.ttf", // /public path, absolute URL, or file path
+      weight: 400,
+      style: "normal",
+    },
+    {
+      name: "Tomorrow",
+      url: "/fonts/Tomorrow-Bold.ttf",
+      weight: 700,
+      style: "normal",
+    },
+  ],
+});
 ```
+
+Custom fonts are lazy-loaded: fetched on first render and cached automatically
+by Takumi's internal key-based cache. Subsequent renders reuse the cached data.
 
 ### FontWrapper Component
 
-Automatically creates a font stack with fallbacks:
+Wraps content with an automatic font-family stack that includes both your
+custom fonts and the built-in non-Latin fallbacks:
 
 ```tsx
 import { FontWrapper } from "@bearstudio/astro-assets-generation";
 
-<FontWrapper fontFamily="Geist">
+<FontWrapper fontFamily="Tomorrow">
   <div style={{ padding: 64 }}>
     <p>English, 日本語, 한국어, العربية, ไทย - all supported!</p>
   </div>
@@ -241,7 +256,28 @@ Emojis are detected and rendered automatically inside any text node. Just write 
 return <h1>Hello 👋 World 🌍</h1>;
 ```
 
-The library uses [Twemoji](https://twemoji.twitter.com/) SVGs by default, fetched from a CDN at render time.
+The default provider is Twemoji. You can change it globally in `configure()` or
+per template via `AssetImageConfig`. The per-template value takes precedence.
+
+```typescript
+// Global default
+configure({ emoji: "noto" });
+```
+
+```tsx
+// Per-template override
+export const config: AssetImageConfig = {
+  width: 1200,
+  height: 630,
+  emoji: "fluent",
+};
+```
+
+Available providers: `"twemoji"` (default), `"blobmoji"`, `"noto"`,
+`"openmoji"`, `"fluent"`, `"fluentFlat"`, `"from-font"`.
+
+`"from-font"` uses emoji glyphs embedded in your loaded fonts instead of
+fetching external images.
 
 ## Styling
 
@@ -313,7 +349,8 @@ configure({
   isDev: import.meta.env.DEV,
   customFonts: [
     /* ... */
-  ],
+  ], // Optional
+  emoji: "twemoji", // Optional. Default: "twemoji"
   // Optional. Resolves `getAstroImageBase64` images and `/`-prefixed font
   // URLs before falling back to fetch. Required for `output: 'static'`.
   loadAsset: diskLoader(),
@@ -390,17 +427,31 @@ Wraps content with automatic font fallback support.
 interface AssetImageConfig {
   width: number;
   height: number;
-  debugScale?: number; // Default: 0.5
+  debugScale?: number; // Scale factor for debug view. Default: 0.5
+  emoji?: EmojiType; // Overrides the global default set in configure()
 }
+```
+
+#### `EmojiType`
+
+```typescript
+type EmojiType =
+  | "twemoji" // Default
+  | "blobmoji"
+  | "noto"
+  | "openmoji"
+  | "fluent"
+  | "fluentFlat"
+  | "from-font"; // Use emoji glyphs from loaded fonts, no external fetch
 ```
 
 #### `FontConfig`
 
 ```typescript
 interface FontConfig {
-  name: string;
-  url: string;
-  weight: number;
+  name: string; // Used in CSS font-family declarations
+  url: string; // HTTP/HTTPS URL, /public path, or absolute file path
+  weight: number; // 100–900
   style: "normal" | "italic";
 }
 ```
@@ -428,10 +479,15 @@ Return `null` or `undefined` to fall back to fetch.
 - Ensure custom font URLs are accessible from production URL
 - Ensure the deployment environment can reach the CDN for built-in fallback fonts
 
+**Emojis not rendering?**
+
+- Ensure the deployment environment can reach the CDN for the configured emoji provider
+- Use `emoji: "from-font"` if your fonts include emoji glyphs and external CDN access is restricted
+
 **Vercel cannot load Takumi native bindings?**
 
 - Ensure `astroAssetsGeneration()` is present in `astro.config`
-- Ensure optional dependencies are installed during deployment
+- Ensure optional dependencies are installed during deployment (`@takumi-rs/core-linux-x64-gnu`)
 
 **Styling issues?**
 

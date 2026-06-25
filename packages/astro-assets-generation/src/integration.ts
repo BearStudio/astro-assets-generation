@@ -7,6 +7,9 @@ import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
 const takumiNativePackage = "@takumi-rs/core-linux-x64-gnu";
 const takumiNativeBinding = "core.linux-x64-gnu.node";
+// takumi-js v2 resolves its native binding via @takumi-rs/core, which itself
+// tries the sibling platform package. We locate the .node file so @astrojs/vercel
+// can include it in the serverless function bundle without manual includeFiles.
 
 const resolvePackage = (packageName: string) => {
   try {
@@ -35,7 +38,10 @@ const getTakumiNativeFiles = (root: URL) => {
     );
   }
 
-  const takumiCorePath = resolvePackage("@takumi-rs/core");
+  // @takumi-rs/core is a transitive dep of takumi-js; resolve it to find
+  // where the @takumi-rs/ scope lives so we can locate the platform package.
+  const takumiCorePath =
+    resolvePackage("@takumi-rs/core") ?? resolvePackage("takumi-js");
 
   if (takumiCorePath && packageDirName) {
     const coreScopeDir = dirname(dirname(dirname(takumiCorePath)));
@@ -89,9 +95,9 @@ export function astroAssetsGeneration(): AstroIntegration {
               ...toArray(config.vite.assetsInclude),
               ...getTakumiNativeFiles(config.root),
             ],
-            optimizeDeps: { exclude: ["@takumi-rs/image-response"] },
+            optimizeDeps: { exclude: ["takumi-js"] },
             ssr: {
-              external: ["@takumi-rs/image-response"],
+              external: ["takumi-js"],
               noExternal: ["@bearstudio/astro-assets-generation"],
             },
           },
