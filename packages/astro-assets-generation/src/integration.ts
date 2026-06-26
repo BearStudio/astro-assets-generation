@@ -1,6 +1,7 @@
 import type { AstroIntegration } from "astro";
 import { realpathSync } from "node:fs";
 import { createRequire } from "node:module";
+import path from "node:path";
 
 const _require = createRequire(import.meta.url);
 
@@ -46,6 +47,17 @@ export function astroAssetsGeneration(): AstroIntegration {
     name: "@bearstudio/astro-assets-generation",
     hooks: {
       "astro:config:setup": ({ config, updateConfig }) => {
+        const isStatic = config.output === "static";
+        const wasmFilePath = isStatic ? resolveTakumiWasmPath() : null;
+        // Absolute path to @takumi-rs/wasm ESM glue code, used in the virtual module.
+        // Rollup cannot resolve the package name from a virtual module (no importer
+        // context), so we use the absolute path computed at build time.
+        const wasmEsmPath = wasmFilePath
+          ? path.join(
+              path.dirname(path.dirname(wasmFilePath)),
+              "dist/export.mjs"
+            )
+          : null;
         updateConfig({
           vite: {
             // @astrojs/vercel forwards vite.assetsInclude into its file tracer.
@@ -56,17 +68,70 @@ export function astroAssetsGeneration(): AstroIntegration {
               ...getTakumiFiles(),
             ],
             optimizeDeps: { exclude: ["takumi-js"] },
-            ssr: {
-              external: ["takumi-js"],
-              noExternal: ["@bearstudio/astro-assets-generation"],
-            },
-            // Inject the WASM file path at SSR bundle time so bundled code can
-            // read it without needing runtime module resolution. @takumi-rs/wasm
-            // lives in takumi-js's pnpm virtual node_modules and cannot be
-            // resolved via CJS require from the SSR bundle context.
-            define: {
-              __TAKUMI_WASM_PATH__: JSON.stringify(resolveTakumiWasmPath()),
-            },
+            ssr: isStatic
+              ? {
+                  // For static output, takumi-js must be bundled because pre-rendered
+                  // page chunks run in a temporary Node.js context that cannot resolve
+                  // packages outside the app's own node_modules.
+                  noExternal: [
+                    "takumi-js",
+                    "@takumi-rs/wasm",
+                    "@takumi-rs/helpers",
+                    "@bearstudio/astro-assets-generation",
+                  ],
+                }
+              : {
+                  external: ["takumi-js"],
+                  noExternal: ["@bearstudio/astro-assets-generation"],
+                },
+            // For server/hybrid output, inject the WASM path so bundled code can
+            // read the WASM binary at runtime without needing to resolve it through
+            // pnpm's virtual node_modules (which is inaccessible from the bundle context).
+            ...(isStatic
+              ? {}
+              : {
+                  define: {
+                    __TAKUMI_WASM_PATH__: JSON.stringify(resolveTakumiWasmPath()),
+                  },
+                }),
+            plugins: wasmFilePath && wasmEsmPath
+              ? [
+                  {
+                    name: "astro-assets-generation:takumi-wasm-backend",
+                    enforce: "pre" as const,
+                    resolveId(id: string, importer: string | undefined) {
+                      // For static output, intercept takumi-js's #backend import and
+                      // replace it with a virtual module that reads the WASM from an
+                      // absolute path. This avoids relying on import.meta.url (which
+                      // points to the output chunk in SSR builds, not the source file)
+                      // and the native .node binding (unavailable in beta.7+).
+                      if (
+                        id === "#backend" &&
+                        importer?.includes("/takumi-js/")
+                      ) {
+                        return "\0virtual:takumi-wasm-node-backend";
+                      }
+                    },
+                    load(id: string) {
+                      if (id === "\0virtual:takumi-wasm-node-backend") {
+                        // Read the WASM binary synchronously at module load time using
+                        // the absolute path resolved at build time. This is equivalent
+                        // to what @takumi-rs/wasm/bundlers/node.mjs does but without
+                        // the new URL(..., import.meta.url) that breaks in SSR builds.
+                        // Import @takumi-rs/wasm by absolute path because Rollup cannot
+                        // resolve bare package names from virtual module context.
+                        return `
+import { readFileSync } from "node:fs";
+import * as wasm from ${JSON.stringify(wasmEsmPath)};
+const wasmBytes = readFileSync(${JSON.stringify(wasmFilePath)});
+wasm.initSync({ module: wasmBytes });
+export const loadBackend = () => Promise.resolve(wasm);
+`;
+                      }
+                    },
+                  },
+                ]
+              : [],
           },
         });
       },
