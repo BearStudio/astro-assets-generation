@@ -1,76 +1,36 @@
 import type { AstroIntegration } from "astro";
-import { existsSync, realpathSync } from "node:fs";
+import { realpathSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 
-const require = createRequire(import.meta.url);
-const takumiNativePackage = "@takumi-rs/core-linux-x64-gnu";
-const takumiNativeBinding = "core.linux-x64-gnu.node";
-// takumi-js v2 resolves its native binding via @takumi-rs/core, which itself
-// tries the sibling platform package. We locate the .node file so @astrojs/vercel
-// can include it in the serverless function bundle without manual includeFiles.
+const _require = createRequire(import.meta.url);
 
-const resolvePackage = (packageName: string) => {
+// Locate the Takumi WASM file. @takumi-rs/wasm is a transitive dep of takumi-js
+// and lives in takumi-js's own pnpm virtual node_modules, so it must be resolved
+// via takumi-js's location rather than directly.
+function resolveTakumiWasmPath(): string | null {
   try {
-    return require.resolve(packageName);
+    const takumiPath = _require.resolve("takumi-js");
+    const takumiReq = createRequire(takumiPath);
+    return takumiReq.resolve("@takumi-rs/wasm/takumi_wasm_bg.wasm");
   } catch {
-    return undefined;
+    return null;
   }
-};
+}
 
-const getTakumiNativeFiles = (root: URL) => {
-  const packageDirName = takumiNativePackage.split("/").at(-1);
-  const candidatePackageDirs = [
-    join(
-      fileURLToPath(root),
-      "node_modules",
-      ...takumiNativePackage.split("/"),
-    ),
-  ];
-
-  // The native package may be installed either from the consuming app or from
-  // this library's optional dependency, depending on the package manager layout.
-  for (const nodeModulesDir of require.resolve.paths(takumiNativePackage) ??
-    []) {
-    candidatePackageDirs.push(
-      join(nodeModulesDir, ...takumiNativePackage.split("/")),
-    );
+// Locate the Takumi WASM file so @astrojs/vercel includes it in the serverless
+// function bundle without app consumers needing manual includeFiles config.
+// takumi-js v2 beta.7+ does not publish platform-specific native packages;
+// the WASM backend is used for all platforms until native packages are released.
+const getTakumiFiles = (): string[] => {
+  const wasmPath = resolveTakumiWasmPath();
+  if (!wasmPath) return [];
+  try {
+    // Include both the symlink and the real file so pnpm links remain valid
+    // after @astrojs/vercel copies assets into the serverless function.
+    return [...new Set([wasmPath, realpathSync(wasmPath)])];
+  } catch {
+    return [wasmPath];
   }
-
-  // @takumi-rs/core is a transitive dep of takumi-js; resolve it to find
-  // where the @takumi-rs/ scope lives so we can locate the platform package.
-  const takumiCorePath =
-    resolvePackage("@takumi-rs/core") ?? resolvePackage("takumi-js");
-
-  if (takumiCorePath && packageDirName) {
-    const coreScopeDir = dirname(dirname(dirname(takumiCorePath)));
-
-    // Takumi's loader resolves the platform package from @takumi-rs/core first.
-    // With pnpm, that can live inside core's virtual node_modules directory.
-    candidatePackageDirs.push(join(coreScopeDir, packageDirName));
-  }
-
-  return [
-    ...new Set(
-      candidatePackageDirs.flatMap((packageDir) => {
-        const files = [
-          join(packageDir, takumiNativeBinding),
-          join(packageDir, "package.json"),
-        ];
-
-        return files.flatMap((file) => {
-          if (!existsSync(file)) {
-            return [];
-          }
-
-          // Include both the symlink and the real file so pnpm links remain valid
-          // after @astrojs/vercel copies assets into the serverless function.
-          return [file, realpathSync(file)];
-        });
-      }),
-    ),
-  ];
 };
 
 const toArray = <T>(value: T | T[] | undefined): T[] => {
@@ -93,13 +53,32 @@ export function astroAssetsGeneration(): AstroIntegration {
             // making app consumers configure Vercel includeFiles themselves.
             assetsInclude: [
               ...toArray(config.vite.assetsInclude),
-              ...getTakumiNativeFiles(config.root),
+              ...getTakumiFiles(),
             ],
             optimizeDeps: { exclude: ["takumi-js"] },
             ssr: {
               external: ["takumi-js"],
               noExternal: ["@bearstudio/astro-assets-generation"],
             },
+            plugins: [
+              {
+                name: "astro-assets-generation:wasm-path",
+                // Provide the WASM file path at build time so bundled SSR code
+                // can load it without needing runtime module resolution.
+                // @takumi-rs/wasm lives in takumi-js's pnpm virtual node_modules
+                // and cannot be resolved via CJS require from the SSR bundle context.
+                resolveId(id: string) {
+                  if (id === "virtual:takumi-wasm-path")
+                    return "\0virtual:takumi-wasm-path";
+                },
+                load(id: string) {
+                  if (id === "\0virtual:takumi-wasm-path") {
+                    const wasmPath = resolveTakumiWasmPath();
+                    return `export default ${JSON.stringify(wasmPath)};`;
+                  }
+                },
+              },
+            ],
           },
         });
       },

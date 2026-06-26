@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import type { JSX } from "react";
 import type { AssetImageConfig, EmojiType, FontConfig } from "./types";
 import { getAllFonts } from "./theme";
+import wasmPath from "virtual:takumi-wasm-path";
 
 /**
  * Optional override called before fetching `siteUrl + url` for asset images
@@ -131,6 +132,28 @@ function getFontLoaders(): FontLoader[] {
   return getAllFonts(libraryConfig.customFonts).map(fontConfigToLoader);
 }
 
+// Lazy WASM fallback: loaded once on first render, cached for all subsequent renders.
+// takumi-js v2 beta.7+ does not publish platform-specific native packages, so the WASM
+// path is always taken until native packages are released.
+// wasmPath is injected at build time by the Vite plugin in integration.ts; it resolves
+// @takumi-rs/wasm from takumi-js's own pnpm virtual node_modules.
+let _wasmLoaded = false;
+let _wasmModule: WebAssembly.Module | undefined;
+
+async function resolveRenderModule(): Promise<{ module?: WebAssembly.Module }> {
+  if (_wasmLoaded) return _wasmModule ? { module: _wasmModule } : {};
+  _wasmLoaded = true;
+  if (wasmPath) {
+    const wasmBytes = await fs.readFile(wasmPath);
+    const wasmBuffer = wasmBytes.buffer.slice(
+      wasmBytes.byteOffset,
+      wasmBytes.byteOffset + wasmBytes.byteLength
+    ) as ArrayBuffer;
+    _wasmModule = await WebAssembly.compile(wasmBuffer);
+  }
+  return _wasmModule ? { module: _wasmModule } : {};
+}
+
 export async function PNG(
   component: JSX.Element,
   config: AssetImageConfig
@@ -141,7 +164,8 @@ export async function PNG(
     fonts: getFontLoaders(),
     emoji: config.emoji ?? libraryConfig.emoji,
     format: "png",
-  }) as Promise<Uint8Array>;
+    ...await resolveRenderModule(),
+  } as Parameters<typeof render>[1]) as Promise<Uint8Array>;
 }
 
 export async function JPEG(
@@ -154,7 +178,8 @@ export async function JPEG(
     fonts: getFontLoaders(),
     emoji: config.emoji ?? libraryConfig.emoji,
     format: "jpeg",
-  }) as Promise<Uint8Array>;
+    ...await resolveRenderModule(),
+  } as Parameters<typeof render>[1]) as Promise<Uint8Array>;
 }
 
 export async function DEBUG_HTML(

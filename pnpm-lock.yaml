@@ -107,8 +107,8 @@ importers:
         specifier: ^5.0.0
         version: 5.16.12(@types/node@20.0.0)(@vercel/functions@2.2.13)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.55.3)(tsx@4.21.0)(typescript@5.9.3)
       takumi-js:
-        specifier: 2.0.0-beta.10
-        version: 2.0.0-beta.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: 2.0.0-beta.13
+        version: 2.0.0-beta.13(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -1202,12 +1202,12 @@ packages:
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7
 
-  '@takumi-rs/core@2.0.0-beta.10':
-    resolution: {integrity: sha512-bFin6oyYpeXwbZlosPJgjKkuy4qOtf59A7efwkip9JG24RZtUFG5LT2yTe7NrosAjCmU+xH2ElHutk+ksD9IbQ==}
+  '@takumi-rs/core@2.0.0-beta.13':
+    resolution: {integrity: sha512-1FVGaNBf/LM3eKm9pTTIvdW77/MBWWeai+k3Y/hugyIGKH8zMiXzJEwaXMoCm2zPmXbaDU4Vu2BJ5ZkCBDulpA==}
     engines: {node: '>=18'}
 
-  '@takumi-rs/helpers@2.0.0-beta.10':
-    resolution: {integrity: sha512-9iHOUNndaX6KHwaNQgOvnEYjfwVXpWFvZXp07dmQNK1zTN6nHQKgn9D0TuZeShHH3je0Ls1mYXFBI7pwHHSVew==}
+  '@takumi-rs/helpers@2.0.0-beta.13':
+    resolution: {integrity: sha512-IIFtsfT+AbiXLjvtb8I41tHUf/Usmaq1lQLhlvsZuSMeVMDX9V2hzxoirxvL7GQuduHtcm0CxKPGkwj7euZIDA==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
@@ -1218,8 +1218,8 @@ packages:
       react-dom:
         optional: true
 
-  '@takumi-rs/wasm@2.0.0-beta.10':
-    resolution: {integrity: sha512-c/BtyTIYhHDLYIDW+YC9+EGlnCHF8ylWxTPFVU5wN66Cu5F+HWXL14QIH20ZpZSplexUHflPnOB4Woqz0xz9OQ==}
+  '@takumi-rs/wasm@2.0.0-beta.13':
+    resolution: {integrity: sha512-1m+ua/047/Ah2aGq/VeAkGpt71KpTeleni2jsb1gYO8BZY4WVz64owSxF9SerFaeAvprz8Hdntu0TtuBmWb9HA==}
     engines: {node: '>=18'}
 
   '@types/babel__core@7.20.5':
@@ -3416,8 +3416,8 @@ packages:
   tailwindcss@4.1.18:
     resolution: {integrity: sha512-4+Z+0yiYyEtUVCScyfHCxOYP06L5Ne+JiHhY2IjR2KWMIWhJOYZKLSGZaP5HkZ8+bY0cxfzwDE5uOmzFXyIwxw==}
 
-  takumi-js@2.0.0-beta.10:
-    resolution: {integrity: sha512-OsIhaewnEH3H7MFWf77cUmexBrMfthlSh3/IwBH8KcMPEBcqECdPxiy+NC5zlTFqreFuMF24QCqBX87ysvfSkA==}
+  takumi-js@2.0.0-beta.13:
+    resolution: {integrity: sha512-cMdu5RRFPlKSqEQ6Ta4ItdI/RcayjYeekEhHT+73NrPE7EmqFgXEku+fKPAWsjMDDc65U+4dB9+qlRN2DZogfw==}
     engines: {node: '>=18'}
 
   tapable@2.3.0:
@@ -4745,21 +4745,21 @@ snapshots:
       tailwindcss: 4.1.18
       vite: 6.4.1(@types/node@22.15.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)
 
-  '@takumi-rs/core@2.0.0-beta.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@takumi-rs/core@2.0.0-beta.13(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@takumi-rs/helpers': 2.0.0-beta.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@takumi-rs/helpers': 2.0.0-beta.13(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
     transitivePeerDependencies:
       - react
       - react-dom
 
-  '@takumi-rs/helpers@2.0.0-beta.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@takumi-rs/helpers@2.0.0-beta.13(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     optionalDependencies:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
-  '@takumi-rs/wasm@2.0.0-beta.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@takumi-rs/wasm@2.0.0-beta.13(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@takumi-rs/helpers': 2.0.0-beta.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@takumi-rs/helpers': 2.0.0-beta.13(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
     transitivePeerDependencies:
       - react
       - react-dom
@@ -7848,11 +7848,11 @@ snapshots:
 
   tailwindcss@4.1.18: {}
 
-  takumi-js@2.0.0-beta.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+  takumi-js@2.0.0-beta.13(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
-      '@takumi-rs/core': 2.0.0-beta.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@takumi-rs/helpers': 2.0.0-beta.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@takumi-rs/wasm': 2.0.0-beta.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@takumi-rs/core': 2.0.0-beta.13(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@takumi-rs/helpers': 2.0.0-beta.13(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@takumi-rs/wasm': 2.0.0-beta.13(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
     transitivePeerDependencies:
       - react
       - react-dom

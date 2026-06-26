@@ -17,5 +17,6 @@ export default defineConfig({
     "node:path",
     "node:url",
     "node:module",
+    "virtual:takumi-wasm-path",
   ],
 });
