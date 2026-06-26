@@ -6,7 +6,10 @@ import { fileURLToPath } from "node:url";
 import type { JSX } from "react";
 import type { AssetImageConfig, EmojiType, FontConfig } from "./types";
 import { getAllFonts } from "./theme";
-import wasmPath from "virtual:takumi-wasm-path";
+
+// Injected by the Vite plugin in integration.ts at SSR bundle time.
+// Undefined when the module is loaded outside of Vite (e.g., astro.config.ts evaluation).
+declare const __TAKUMI_WASM_PATH__: string | undefined;
 
 /**
  * Optional override called before fetching `siteUrl + url` for asset images
@@ -135,16 +138,18 @@ function getFontLoaders(): FontLoader[] {
 // Lazy WASM fallback: loaded once on first render, cached for all subsequent renders.
 // takumi-js v2 beta.7+ does not publish platform-specific native packages, so the WASM
 // path is always taken until native packages are released.
-// wasmPath is injected at build time by the Vite plugin in integration.ts; it resolves
-// @takumi-rs/wasm from takumi-js's own pnpm virtual node_modules.
+// __TAKUMI_WASM_PATH__ is replaced by Vite's define at SSR bundle time; it is undefined
+// when this module is loaded outside of Vite (e.g., during astro.config.ts evaluation).
 let _wasmLoaded = false;
 let _wasmModule: WebAssembly.Module | undefined;
 
 async function resolveRenderModule(): Promise<{ module?: WebAssembly.Module }> {
   if (_wasmLoaded) return _wasmModule ? { module: _wasmModule } : {};
   _wasmLoaded = true;
-  if (wasmPath) {
-    const wasmBytes = await fs.readFile(wasmPath);
+  const wasmFilePath =
+    typeof __TAKUMI_WASM_PATH__ !== "undefined" ? __TAKUMI_WASM_PATH__ : null;
+  if (wasmFilePath) {
+    const wasmBytes = await fs.readFile(wasmFilePath);
     const wasmBuffer = wasmBytes.buffer.slice(
       wasmBytes.byteOffset,
       wasmBytes.byteOffset + wasmBytes.byteLength

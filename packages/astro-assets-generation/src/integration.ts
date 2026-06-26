@@ -60,25 +60,13 @@ export function astroAssetsGeneration(): AstroIntegration {
               external: ["takumi-js"],
               noExternal: ["@bearstudio/astro-assets-generation"],
             },
-            plugins: [
-              {
-                name: "astro-assets-generation:wasm-path",
-                // Provide the WASM file path at build time so bundled SSR code
-                // can load it without needing runtime module resolution.
-                // @takumi-rs/wasm lives in takumi-js's pnpm virtual node_modules
-                // and cannot be resolved via CJS require from the SSR bundle context.
-                resolveId(id: string) {
-                  if (id === "virtual:takumi-wasm-path")
-                    return "\0virtual:takumi-wasm-path";
-                },
-                load(id: string) {
-                  if (id === "\0virtual:takumi-wasm-path") {
-                    const wasmPath = resolveTakumiWasmPath();
-                    return `export default ${JSON.stringify(wasmPath)};`;
-                  }
-                },
-              },
-            ],
+            // Inject the WASM file path at SSR bundle time so bundled code can
+            // read it without needing runtime module resolution. @takumi-rs/wasm
+            // lives in takumi-js's pnpm virtual node_modules and cannot be
+            // resolved via CJS require from the SSR bundle context.
+            define: {
+              __TAKUMI_WASM_PATH__: JSON.stringify(resolveTakumiWasmPath()),
+            },
           },
         });
       },
