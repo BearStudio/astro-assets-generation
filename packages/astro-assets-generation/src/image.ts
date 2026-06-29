@@ -150,11 +150,7 @@ async function resolveRenderModule(): Promise<{ module?: WebAssembly.Module }> {
     typeof __TAKUMI_WASM_PATH__ !== "undefined" ? __TAKUMI_WASM_PATH__ : null;
   if (wasmFilePath) {
     const wasmBytes = await fs.readFile(wasmFilePath);
-    const wasmBuffer = wasmBytes.buffer.slice(
-      wasmBytes.byteOffset,
-      wasmBytes.byteOffset + wasmBytes.byteLength
-    ) as ArrayBuffer;
-    _wasmModule = await WebAssembly.compile(wasmBuffer);
+    _wasmModule = await WebAssembly.compile(new Uint8Array(wasmBytes));
   }
   return _wasmModule ? { module: _wasmModule } : {};
 }
@@ -163,28 +159,30 @@ export async function PNG(
   component: JSX.Element,
   config: AssetImageConfig
 ): Promise<Uint8Array> {
+  const { module } = await resolveRenderModule();
   return render(component, {
     width: config.width,
     height: config.height,
     fonts: getFontLoaders(),
     emoji: config.emoji ?? libraryConfig.emoji,
     format: "png",
-    ...await resolveRenderModule(),
-  } as Parameters<typeof render>[1]) as Promise<Uint8Array>;
+    module,
+  });
 }
 
 export async function JPEG(
   component: JSX.Element,
   config: AssetImageConfig
 ): Promise<Uint8Array> {
+  const { module } = await resolveRenderModule();
   return render(component, {
     width: config.width,
     height: config.height,
     fonts: getFontLoaders(),
     emoji: config.emoji ?? libraryConfig.emoji,
     format: "jpeg",
-    ...await resolveRenderModule(),
-  } as Parameters<typeof render>[1]) as Promise<Uint8Array>;
+    module,
+  });
 }
 
 export async function DEBUG_HTML(
@@ -285,7 +283,8 @@ export async function DEBUG_HTML(
 }
 
 export function generateImageResponsePNG(buffer: ArrayBuffer | Uint8Array) {
-  return new Response(buffer as BodyInit, {
+  const body = buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer);
+  return new Response(body, {
     headers: {
       "Content-Type": "image/png",
       // "Cache-Control": "public, max-age=31536000, immutable",
@@ -294,7 +293,8 @@ export function generateImageResponsePNG(buffer: ArrayBuffer | Uint8Array) {
 }
 
 export function generateImageResponseJPEG(buffer: ArrayBuffer | Uint8Array) {
-  return new Response(buffer as BodyInit, {
+  const body = buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer);
+  return new Response(body, {
     headers: {
       "Content-Type": "image/jpeg",
       // "Cache-Control": "public, max-age=31536000, immutable",
