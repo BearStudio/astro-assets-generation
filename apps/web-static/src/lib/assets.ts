@@ -22,6 +22,7 @@ configure({
   siteUrl: import.meta.env.SITE ?? "http://localhost:4321",
   isDev: import.meta.env.DEV,
   customFonts,
+  emoji: "noto",
   // No server runs during static prerender, so resolve assets from disk.
   loadAsset: diskLoader(),
 });

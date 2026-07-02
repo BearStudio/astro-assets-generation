@@ -21,4 +21,5 @@ configure({
   siteUrl: import.meta.env.SITE ?? "http://localhost:4321",
   isDev: import.meta.env.DEV,
   customFonts,
+  emoji: "twemoji",
 });
