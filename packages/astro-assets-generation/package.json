@@ -10,7 +10,8 @@
     "prepublishOnly": "pnpm build",
     "npm:publish": "pnpm publish --access public",
     "verdaccio:publish": "pnpm publish --registry http://localhost:4873 --no-git-checks",
-    "verdaccio:unpublish": "npm unpublish @bearstudio/astro-assets-generation@$(node -p \"require('./package.json').version\") --registry http://localhost:4873 --force"
+    "verdaccio:unpublish": "npm unpublish @bearstudio/astro-assets-generation@$(node -p \"require('./package.json').version\") --registry http://localhost:4873 --force",
+    "check-types": "tsc --noEmit"
   },
   "exports": {
     ".": {
@@ -27,7 +28,7 @@
     "README.md"
   ],
   "dependencies": {
-    "takumi-js": "2.0.0-rc.3"
+    "takumi-js": "2.0.0-rc.16"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
