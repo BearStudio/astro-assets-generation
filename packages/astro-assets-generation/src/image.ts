@@ -6,10 +6,12 @@ import { fileURLToPath } from "node:url";
 import type { JSX } from "react";
 import type { AssetImageConfig, EmojiType, FontConfig } from "./types";
 import { getAllFonts } from "./theme";
+import { resolveBuiltFilePath } from "./wasm-path";
 
 // Injected by the Vite plugin in integration.ts at SSR bundle time.
 // Undefined when the module is loaded outside of Vite (e.g., astro.config.ts evaluation).
-declare const __TAKUMI_WASM_PATH__: string | undefined;
+declare const __TAKUMI_WASM_PATH__: string | null | undefined;
+declare const __TAKUMI_WASM_RELATIVE_PATH__: string | null | undefined;
 
 /**
  * Optional override called before fetching `siteUrl + url` for asset images
@@ -140,19 +142,42 @@ function getFontLoaders(): FontLoader[] {
 // resolving the native @takumi-rs/core addon — a deliberate choice, see integration.ts.
 // __TAKUMI_WASM_PATH__ is replaced by Vite's define at SSR bundle time; it is undefined
 // when this module is loaded outside of Vite (e.g., during astro.config.ts evaluation).
-let _wasmLoaded = false;
-let _wasmModule: WebAssembly.Module | undefined;
+let _wasmModulePromise: Promise<WebAssembly.Module | undefined> | undefined;
+
+async function compileWasmModule(): Promise<WebAssembly.Module | undefined> {
+  const absolutePath =
+    typeof __TAKUMI_WASM_PATH__ !== "undefined" ? __TAKUMI_WASM_PATH__ : null;
+  const relativePath =
+    typeof __TAKUMI_WASM_RELATIVE_PATH__ !== "undefined"
+      ? __TAKUMI_WASM_RELATIVE_PATH__
+      : null;
+
+  if (!absolutePath && !relativePath) return undefined;
+
+  // The path is resolved at runtime: the build-time absolute path does not exist
+  // on deploy targets that move the bundle to another filesystem root (Vercel
+  // builds in /vercel/path0 and runs the function from /var/task).
+  const wasmFilePath = resolveBuiltFilePath({
+    absolutePath,
+    relativePath,
+    fromDir: path.dirname(fileURLToPath(import.meta.url)),
+    label: "the Takumi WASM binary",
+  });
+  const wasmBytes = await fs.readFile(wasmFilePath);
+  return WebAssembly.compile(new Uint8Array(wasmBytes));
+}
 
 async function resolveRenderModule(): Promise<{ module?: WebAssembly.Module }> {
-  if (_wasmLoaded) return _wasmModule ? { module: _wasmModule } : {};
-  _wasmLoaded = true;
-  const wasmFilePath =
-    typeof __TAKUMI_WASM_PATH__ !== "undefined" ? __TAKUMI_WASM_PATH__ : null;
-  if (wasmFilePath) {
-    const wasmBytes = await fs.readFile(wasmFilePath);
-    _wasmModule = await WebAssembly.compile(new Uint8Array(wasmBytes));
+  // The promise is cached rather than a "loaded" flag: a failed load must not
+  // silently degrade every later render to native @takumi-rs/core resolution.
+  _wasmModulePromise ??= compileWasmModule();
+  try {
+    const module = await _wasmModulePromise;
+    return module ? { module } : {};
+  } catch (error) {
+    _wasmModulePromise = undefined;
+    throw error;
   }
-  return _wasmModule ? { module: _wasmModule } : {};
 }
 
 export async function PNG(
