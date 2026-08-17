@@ -135,9 +135,9 @@ function getFontLoaders(): FontLoader[] {
   return getAllFonts(libraryConfig.customFonts).map(fontConfigToLoader);
 }
 
-// Lazy WASM fallback: loaded once on first render, cached for all subsequent renders.
-// takumi-js v2 beta.7+ does not publish platform-specific native packages, so the WASM
-// path is always taken until native packages are released.
+// WASM module: compiled once on first render, cached for all subsequent renders.
+// Passing `module` to `render` makes takumi-js force the WASM backend instead of
+// resolving the native @takumi-rs/core addon — a deliberate choice, see integration.ts.
 // __TAKUMI_WASM_PATH__ is replaced by Vite's define at SSR bundle time; it is undefined
 // when this module is loaded outside of Vite (e.g., during astro.config.ts evaluation).
 let _wasmLoaded = false;

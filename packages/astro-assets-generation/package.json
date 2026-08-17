@@ -28,7 +28,7 @@
     "README.md"
   ],
   "dependencies": {
-    "takumi-js": "2.0.0-rc.16"
+    "takumi-js": "2.9.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

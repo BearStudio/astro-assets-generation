@@ -20,8 +20,10 @@ function resolveTakumiWasmPath(): string | null {
 
 // Locate the Takumi WASM file so @astrojs/vercel includes it in the serverless
 // function bundle without app consumers needing manual includeFiles config.
-// takumi-js v2 beta.7+ does not publish platform-specific native packages;
-// the WASM backend is used for all platforms until native packages are released.
+// This integration deliberately runs Takumi on WASM everywhere: it needs no
+// platform-specific optional dependency on the deploy target and works in
+// runtimes where the native addon cannot load (WebContainer, edge). The native
+// @takumi-rs/core-* packages do exist, but we never resolve them.
 const getTakumiFiles = (): string[] => {
   const wasmPath = resolveTakumiWasmPath();
   if (!wasmPath) return [];
@@ -104,7 +106,8 @@ export function astroAssetsGeneration(): AstroIntegration {
                       // replace it with a virtual module that reads the WASM from an
                       // absolute path. This avoids relying on import.meta.url (which
                       // points to the output chunk in SSR builds, not the source file)
-                      // and the native .node binding (unavailable in beta.7+).
+                      // and keeps the native .node binding out of the prerender
+                      // context, where @takumi-rs/core cannot be resolved.
                       if (
                         id === "#backend" &&
                         importer?.includes("/takumi-js/")
