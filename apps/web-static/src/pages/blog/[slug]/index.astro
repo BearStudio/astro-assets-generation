@@ -19,7 +19,7 @@ if (!post) {
 
 const { Content } = await render(post);
 
-const ogImageUrl = new URL(`${slug}/assets/cover-author.png`, Astro.url);
+const ogImageUrl = new URL(`/blog/${slug}/assets/cover-author.png`, Astro.url);
 ---
 
 <Layout title={post.data.title} ogImage={ogImageUrl.toString()}>
@@ -58,7 +58,7 @@ const ogImageUrl = new URL(`${slug}/assets/cover-author.png`, Astro.url);
         </span>
       </p>
       <img
-        src={ogImageUrl.toString()}
+        src={ogImageUrl.pathname}
         alt={`OG image for ${post.data.title}`}
         class="w-full rounded-lg shadow-md border border-gray-200"
       />

@@ -1,12 +1,15 @@
-import { ImageResponse } from "@takumi-rs/image-response";
+import { render, type FontLoader } from "takumi-js";
 import { renderToStaticMarkup } from "react-dom/server";
-import { match } from "ts-pattern";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { JSX } from "react";
-import type { AssetImageConfig, FontConfig } from "./types";
+import type { AssetImageConfig, EmojiType, FontConfig } from "./types";
 import { getAllFonts } from "./theme";
+
+// Injected by the Vite plugin in integration.ts at SSR bundle time.
+// Undefined when the module is loaded outside of Vite (e.g., astro.config.ts evaluation).
+declare const __TAKUMI_WASM_PATH__: string | undefined;
 
 /**
  * Optional override called before fetching `siteUrl + url` for asset images
@@ -21,6 +24,7 @@ let libraryConfig = {
   siteUrl: "",
   isDev: true,
   customFonts: [] as FontConfig[],
+  emoji: "twemoji" as EmojiType,
   loadAsset: undefined as AssetLoader | undefined,
 };
 
@@ -41,16 +45,13 @@ let libraryConfig = {
  *     }
  *   ],
  *   isDev: import.meta.env.DEV,
- *   siteUrl: import.meta.env.SITE
+ *   siteUrl: import.meta.env.SITE,
+ *   emoji: "twemoji", // "twemoji" | "blobmoji" | "noto" | "openmoji" | "fluent" | "fluentFlat" | "from-font"
  * });
  * ```
  */
 export function configure(config: Partial<typeof libraryConfig>) {
   libraryConfig = { ...libraryConfig, ...config };
-  // Invalidate font cache when custom fonts are changed
-  if (config.customFonts !== undefined) {
-    fontsCache = null;
-  }
 }
 
 export function getConfiguredFonts(): FontConfig[] {
@@ -91,7 +92,7 @@ async function loadFontData(font: FontConfig): Promise<Buffer> {
 
   // For relative paths (built-in package fonts like "./fonts/NotoSansThai-Regular.ttf").
   // Always try filesystem in order: relative to this file, then via node_modules
-  // (needed when bundled with noExternal), then HTTP as last resort.
+  // (needed when bundled with noExternal).
   const fontFileName = path.basename(font.url);
   const currentDir = path.dirname(fileURLToPath(import.meta.url));
   const possiblePaths = [
@@ -115,79 +116,73 @@ async function loadFontData(font: FontConfig): Promise<Buffer> {
       continue;
     }
   }
-  const url = new URL(`/fonts/${fontFileName}`, libraryConfig.siteUrl);
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(
-      `Failed to load built-in font ${font.name}. Tried: ${possiblePaths.join(", ")}`
-    );
-  }
-  return Buffer.from(await res.arrayBuffer());
-}
-
-let fontsCache: Array<{
-  name: string;
-  data: ArrayBuffer;
-  weight: number;
-  style: string;
-}> | null = null;
-
-/**
- * Load all fonts and prepare them for ImageResponse
- * Uses caching to avoid reloading fonts on every request
- */
-async function loadFonts(): Promise<
-  Array<{ name: string; data: ArrayBuffer; weight: number; style: string }>
-> {
-  const allFonts = getAllFonts(libraryConfig.customFonts);
-  return Promise.all(
-    allFonts.map(async (font) => {
-      const buffer = await loadFontData(font);
-      // Convert Buffer to ArrayBuffer
-      const arrayBuffer = new ArrayBuffer(buffer.length);
-      const view = new Uint8Array(arrayBuffer);
-      view.set(buffer);
-      return {
-        name: font.name,
-        weight: font.weight,
-        style: font.style,
-        data: arrayBuffer,
-      };
-    })
+  throw new Error(
+    `Failed to load built-in font ${font.name}. Tried: ${possiblePaths.join(", ")}`
   );
 }
 
-async function getFonts(): Promise<
-  Array<{ name: string; data: ArrayBuffer; weight: number; style: string }>
-> {
-  return (fontsCache ??= await loadFonts());
+function fontConfigToLoader(font: FontConfig): FontLoader {
+  return {
+    name: font.name,
+    weight: font.weight,
+    style: font.style,
+    key: font.url,
+    data: () => loadFontData(font),
+  };
 }
 
-export async function PNG(component: JSX.Element, config: AssetImageConfig) {
-  const fonts = await getFonts();
+function getFontLoaders(): FontLoader[] {
+  return getAllFonts(libraryConfig.customFonts).map(fontConfigToLoader);
+}
 
-  const response = new ImageResponse(component, {
+// WASM module: compiled once on first render, cached for all subsequent renders.
+// Passing `module` to `render` makes takumi-js force the WASM backend instead of
+// resolving the native @takumi-rs/core addon — a deliberate choice, see integration.ts.
+// __TAKUMI_WASM_PATH__ is replaced by Vite's define at SSR bundle time; it is undefined
+// when this module is loaded outside of Vite (e.g., during astro.config.ts evaluation).
+let _wasmLoaded = false;
+let _wasmModule: WebAssembly.Module | undefined;
+
+async function resolveRenderModule(): Promise<{ module?: WebAssembly.Module }> {
+  if (_wasmLoaded) return _wasmModule ? { module: _wasmModule } : {};
+  _wasmLoaded = true;
+  const wasmFilePath =
+    typeof __TAKUMI_WASM_PATH__ !== "undefined" ? __TAKUMI_WASM_PATH__ : null;
+  if (wasmFilePath) {
+    const wasmBytes = await fs.readFile(wasmFilePath);
+    _wasmModule = await WebAssembly.compile(new Uint8Array(wasmBytes));
+  }
+  return _wasmModule ? { module: _wasmModule } : {};
+}
+
+export async function PNG(
+  component: JSX.Element,
+  config: AssetImageConfig
+): Promise<Uint8Array> {
+  const { module } = await resolveRenderModule();
+  return render(component, {
     width: config.width,
     height: config.height,
-    fonts,
-    emoji: "twemoji",
+    fonts: getFontLoaders(),
+    emoji: config.emoji ?? libraryConfig.emoji,
+    format: "png",
+    module,
   });
-
-  return response.arrayBuffer();
 }
 
-export async function JPEG(component: JSX.Element, config: AssetImageConfig) {
-  const fonts = await getFonts();
-
-  const response = new ImageResponse(component, {
+export async function JPEG(
+  component: JSX.Element,
+  config: AssetImageConfig
+): Promise<Uint8Array> {
+  const { module } = await resolveRenderModule();
+  return render(component, {
     width: config.width,
     height: config.height,
-    fonts,
+    fonts: getFontLoaders(),
+    emoji: config.emoji ?? libraryConfig.emoji,
     format: "jpeg",
-    emoji: "twemoji",
+    module,
   });
-
-  return response.arrayBuffer();
 }
 
 export async function DEBUG_HTML(
@@ -287,8 +282,9 @@ export async function DEBUG_HTML(
   </html>`;
 }
 
-export function generateImageResponsePNG(buffer: ArrayBuffer) {
-  return new Response(buffer, {
+export function generateImageResponsePNG(buffer: ArrayBuffer | Uint8Array) {
+  const body = buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer);
+  return new Response(body, {
     headers: {
       "Content-Type": "image/png",
       // "Cache-Control": "public, max-age=31536000, immutable",
@@ -296,8 +292,9 @@ export function generateImageResponsePNG(buffer: ArrayBuffer) {
   });
 }
 
-export function generateImageResponseJPEG(buffer: ArrayBuffer) {
-  return new Response(buffer, {
+export function generateImageResponseJPEG(buffer: ArrayBuffer | Uint8Array) {
+  const body = buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer);
+  return new Response(body, {
     headers: {
       "Content-Type": "image/jpeg",
       // "Cache-Control": "public, max-age=31536000, immutable",
@@ -341,6 +338,14 @@ async function getAstroImageBuffer(image: { src: string }) {
     .exec(image.src)?.[0]
     .slice(1);
 
+  const fileTypeMap: Record<string, string> = {
+    jpg: "jpeg",
+    jpeg: "jpeg",
+    png: "png",
+  };
+  const fileType = fileExtension ? fileTypeMap[fileExtension] : undefined;
+  if (!fileType) throw new Error("Must be a jpg, jpeg or png");
+
   let buffer: Buffer | null | undefined;
   if (libraryConfig.isDev) {
     buffer = await readDevAstroImage(image);
@@ -351,15 +356,7 @@ async function getAstroImageBuffer(image: { src: string }) {
     buffer ??= await fetchAstroImage(image);
   }
 
-  return {
-    buffer,
-    fileType: match(fileExtension)
-      .with("jpg", "jpeg", () => "jpeg")
-      .with("png", () => "png")
-      .otherwise(() => {
-        throw new Error(`Must be a jpg, jpeg or png`);
-      }),
-  };
+  return { buffer, fileType };
 }
 
 export async function getAstroImageBase64(image: { src: string }) {
@@ -367,15 +364,20 @@ export async function getAstroImageBase64(image: { src: string }) {
   return imageBufferToBase64(buffer, fileType);
 }
 
-export function imageBufferToBase64(buffer: Buffer, fileType: string) {
-  return `data:image/${fileType};base64, ${buffer.toString("base64")}`;
+export function imageBufferToBase64(
+  buffer: Buffer | Uint8Array,
+  fileType: string
+) {
+  const buf = Buffer.isBuffer(buffer)
+    ? buffer
+    : Buffer.from(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+  return `data:image/${fileType};base64, ${buf.toString("base64")}`;
 }
 
 export async function jsxToBase64(
   component: JSX.Element,
   config: { width: number; height: number }
 ): Promise<string> {
-  const arrayBuffer = await PNG(component, config);
-  const buffer = Buffer.from(arrayBuffer);
-  return imageBufferToBase64(buffer, "png");
+  const data = await PNG(component, config);
+  return imageBufferToBase64(data, "png");
 }
