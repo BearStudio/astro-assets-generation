@@ -1,0 +1,377 @@
+---
+title: "Tutorial: Generate OG images for a static blog"
+description: Build a fully static Astro blog whose Open Graph images are rendered from a React component at build time.
+sidebar:
+  label: Static site (build time)
+  order: 1
+---
+
+import { Steps, Aside, FileTree, Tabs, TabItem } from "@astrojs/starlight/components";
+
+In this tutorial you will create a small Astro blog and give every post its own
+Open Graph image. The images are designed as a React component, rendered with
+Takumi, and written to disk at build time. No server runs in production: the
+output is plain files you can host anywhere.
+
+By the end you will have:
+
+- A blog content collection with two posts.
+- An image template that reads the post title and author.
+- One PNG per post under `dist/blog/<slug>/assets/og-image.png`.
+- The `<meta property="og:image">` tag pointing at that PNG.
+
+The tutorial takes about 20 minutes. It assumes you know the basics of Astro
+(pages, content collections) and React (JSX, props).
+
+<Aside type="tip">
+If your site already runs on a server adapter and you want images generated on
+request instead of at build time, follow the
+[dynamic tutorial](../dynamic-og-images/) instead.
+</Aside>
+
+## Prerequisites
+
+- Node.js 18 or newer.
+- pnpm (the commands below use it; npm or yarn work the same way).
+- A terminal and a code editor.
+
+## 1. Create the project
+
+<Steps>
+
+1. Scaffold an empty Astro project and move into it:
+
+   ```bash
+   pnpm create astro@latest og-blog -- --template minimal --no-install --no-git
+   cd og-blog
+   pnpm install
+   ```
+
+2. Add the React integration. The library renders templates written in JSX, so
+   Astro needs to know how to compile `.tsx` files:
+
+   ```bash
+   pnpm astro add react
+   ```
+
+   Answer **yes** to every prompt. This installs `@astrojs/react`, `react` and
+   `react-dom`, and adds `react()` to your Astro config.
+
+3. Install the library:
+
+   ```bash
+   pnpm add @bearstudio/astro-assets-generation
+   ```
+
+</Steps>
+
+## 2. Register the integration
+
+Open `astro.config.mjs` and add `astroAssetsGeneration()` next to `react()`.
+Also set `site`: the library needs to know the public URL of your site to
+resolve fonts and images.
+
+```javascript title="astro.config.mjs"
+import { defineConfig } from "astro/config";
+import react from "@astrojs/react";
+import { astroAssetsGeneration } from "@bearstudio/astro-assets-generation";
+
+export default defineConfig({
+  site: "https://example.com",
+  integrations: [react(), astroAssetsGeneration()],
+});
+```
+
+The integration adjusts Vite so Takumi's WebAssembly renderer can run inside
+Astro's prerender step. You never need to touch that configuration yourself.
+
+## 3. Add a blog collection
+
+You need something to put on the images. Create a `blog` collection with two
+posts.
+
+<Steps>
+
+1. Define the collection:
+
+   ```typescript title="src/content.config.ts"
+   import { defineCollection, z } from "astro:content";
+   import { glob } from "astro/loaders";
+
+   const blog = defineCollection({
+     loader: glob({ pattern: "**/*.md", base: "./src/content/blog" }),
+     schema: z.object({
+       title: z.string(),
+       author: z.string(),
+       date: z.coerce.date(),
+     }),
+   });
+
+   export const collections = { blog };
+   ```
+
+2. Write two posts:
+
+   ```markdown title="src/content/blog/hello-world.md"
+   ---
+   title: Hello, world
+   author: Ada Lovelace
+   date: 2026-01-10
+   ---
+
+   The first post.
+   ```
+
+   ```markdown title="src/content/blog/second-post.md"
+   ---
+   title: Rendering images with Takumi
+   author: Grace Hopper
+   date: 2026-02-03
+   ---
+
+   The second post.
+   ```
+
+</Steps>
+
+## 4. Configure the library
+
+The library is configured once, from a module you import wherever you generate
+images. Create it now.
+
+```typescript title="src/lib/assets.ts"
+import { configure } from "@bearstudio/astro-assets-generation";
+import { diskLoader } from "@bearstudio/astro-assets-generation/disk-loader";
+
+configure({
+  siteUrl: import.meta.env.SITE ?? "http://localhost:4321",
+  isDev: import.meta.env.DEV,
+  // Static builds have no server to fetch from, so fonts and images are
+  // read from `dist/` and `public/` on disk instead.
+  loadAsset: diskLoader(),
+});
+```
+
+Two lines matter most here:
+
+- `isDev` tells the library whether it runs under the dev server or a build.
+  Always pass `import.meta.env.DEV`.
+- `loadAsset: diskLoader()` is what makes static output work. During
+  `astro build` there is no HTTP server, so anything the template needs is
+  read from disk.
+
+## 5. Write the image template
+
+A template is a React component in a file whose name starts with `_`. The
+underscore keeps Astro from treating it as a page. Its default export receives
+the route params, and it exports a `config` object with the image size.
+
+Create the template next to where the API route will live:
+
+```tsx title="src/pages/blog/[slug]/assets/_og-image.tsx"
+import { getEntry } from "astro:content";
+import type { AssetImageConfig } from "@bearstudio/astro-assets-generation";
+
+export const config: AssetImageConfig = {
+  width: 1200,
+  height: 630,
+};
+
+export default async function OgImage({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const post = await getEntry("blog", params.slug);
+  if (!post) throw new Error(`Unknown post: ${params.slug}`);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        width: "100%",
+        height: "100%",
+        padding: 64,
+        color: "white",
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      }}
+    >
+      <h1 style={{ fontSize: 72, fontWeight: "bold", lineHeight: 1.1 }}>
+        {post.data.title}
+      </h1>
+      <p style={{ fontSize: 28 }}>
+        {post.data.author} · {post.data.date.toLocaleDateString("en-GB")}
+      </p>
+    </div>
+  );
+}
+```
+
+Notice that the component is `async`. Templates can await anything: content
+entries, fetches, file reads.
+
+<Aside type="note">
+Styling uses inline `style` objects, not CSS files or class names. Takumi
+implements a subset of CSS: flexbox, text, colours, gradients, borders and
+radii are well supported. Check anything more exotic in the rendered PNG.
+</Aside>
+
+## 6. Create the API route
+
+The route turns templates into URLs. Its file name is fixed:
+`[__image].[__type].ts`, with two underscores before each param name.
+
+```typescript title="src/pages/blog/[slug]/assets/[__image].[__type].ts"
+import {
+  apiImageEndpoint,
+  getStaticPathsForAssets,
+} from "@bearstudio/astro-assets-generation";
+import type { APIRoute } from "astro";
+import { getCollection } from "astro:content";
+import "../../../../lib/assets";
+
+// Every `_*.tsx` file in this folder is a template.
+const modules = import.meta.glob("./_*.tsx", { eager: true });
+
+export const getStaticPaths = async () => {
+  const posts = await getCollection("blog");
+  return getStaticPathsForAssets(
+    modules,
+    posts.map((post) => ({ slug: post.id })),
+    ["png"],
+  );
+};
+
+export const GET: APIRoute = apiImageEndpoint(modules);
+```
+
+Three things happen here:
+
+- The side-effect import of `lib/assets` runs `configure()` before any image is
+  rendered.
+- `getStaticPathsForAssets` builds one path per post, per template, per image
+  type. With one template and `["png"]`, that is one PNG per post.
+- `apiImageEndpoint` is the handler. It picks the template by name, renders it
+  and returns the image.
+
+Your `src/pages` folder should now look like this:
+
+<FileTree>
+
+- src
+  - pages
+    - blog
+      - \[slug\]
+        - assets
+          - \_og-image.tsx
+          - \[\_\_image\].\[\_\_type\].ts
+    - index.astro
+
+</FileTree>
+
+## 7. Look at the result
+
+Start the dev server:
+
+```bash
+pnpm dev
+```
+
+Open [http://localhost:4321/blog/hello-world/assets/og-image.png](http://localhost:4321/blog/hello-world/assets/og-image.png). You should
+see a purple gradient with the post title and author.
+
+Change the gradient colours in the template and reload: the image updates.
+
+## 8. Reference the image from the page
+
+An OG image is only useful if pages point to it. Create a page for each post
+and add the meta tag.
+
+```astro title="src/pages/blog/[slug].astro"
+---
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog");
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const ogImage = new URL(`/blog/${post.id}/assets/og-image.png`, Astro.site);
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{post.data.title}</title>
+    <meta property="og:title" content={post.data.title} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <h1>{post.data.title}</h1>
+    <Content />
+  </body>
+</html>
+```
+
+`Astro.site` comes from the `site` value in your config, so the tag holds an
+absolute URL. Social networks require absolute URLs.
+
+## 9. Build
+
+Stop the dev server and build:
+
+```bash
+pnpm build
+```
+
+The build log lists the generated files. Confirm they exist:
+
+<Tabs>
+  <TabItem label="macOS / Linux">
+    ```bash
+    find dist/blog -name "*.png"
+    ```
+  </TabItem>
+  <TabItem label="Windows (PowerShell)">
+    ```powershell
+    Get-ChildItem -Recurse dist\blog -Filter *.png
+    ```
+  </TabItem>
+</Tabs>
+
+You should see:
+
+```
+dist/blog/hello-world/assets/og-image.png
+dist/blog/second-post/assets/og-image.png
+```
+
+Run `pnpm preview` and open a post page. View the source: the `og:image` tag
+points at a URL that now resolves to a real file.
+
+## What you built
+
+You have a static site where each blog post ships with a build-time generated
+Open Graph image. Adding a post adds an image. Changing the template changes
+every image on the next build.
+
+## Where to go next
+
+- [Preview a template in the browser](../../guides/preview-templates/) to
+  iterate on the design without rendering a PNG each time.
+- [Add custom fonts](../../guides/custom-fonts/) to replace the default
+  sans-serif.
+- [Embed images in a template](../../guides/embed-images/) to add an author
+  avatar or a logo.
+- [Generate images on demand](../dynamic-og-images/) if your site grows to
+  thousands of pages.

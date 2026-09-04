@@ -1,0 +1,84 @@
+---
+title: Astro Assets Generation
+description: Generate Open Graph images and other assets from React components in your Astro project, at build time or on demand.
+template: splash
+hero:
+  tagline: Design OG images with JSX. Render them with Takumi. Ship them from Astro, static or on demand.
+  actions:
+    - text: Start the tutorial
+      link: ./tutorials/static-og-images/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/BearStudio/astro-assets-generation
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from "@astrojs/starlight/components";
+
+```bash
+pnpm add @bearstudio/astro-assets-generation
+```
+
+## Learn
+
+<CardGrid>
+  <LinkCard
+    title="Static site (build time)"
+    description="Build a blog whose OG images are rendered during astro build. No server required."
+    href="./tutorials/static-og-images/"
+  />
+  <LinkCard
+    title="Server adapter (on demand)"
+    description="Render images on the first request with the Node adapter, return 404s, add caching."
+    href="./tutorials/dynamic-og-images/"
+  />
+</CardGrid>
+
+## Do
+
+<CardGrid>
+  <LinkCard title="Preview a template in the browser" href="./guides/preview-templates/" />
+  <LinkCard title="Add custom fonts" href="./guides/custom-fonts/" />
+  <LinkCard title="Change the emoji provider" href="./guides/emoji-provider/" />
+  <LinkCard title="Embed images in a template" href="./guides/embed-images/" />
+  <LinkCard title="Add more templates and formats" href="./guides/multiple-templates/" />
+  <LinkCard title="Link generated images from your pages" href="./guides/og-meta-tags/" />
+  <LinkCard title="Deploy to Vercel" href="./guides/deploy-to-vercel/" />
+  <LinkCard title="Troubleshoot common problems" href="./guides/troubleshooting/" />
+</CardGrid>
+
+## Look up
+
+<CardGrid>
+  <LinkCard title="configure()" href="./reference/configuration/" />
+  <LinkCard title="API route" href="./reference/api-route/" />
+  <LinkCard title="Template modules" href="./reference/templates/" />
+  <LinkCard title="Types" href="./reference/types/" />
+</CardGrid>
+
+## Features
+
+<CardGrid stagger>
+  <Card title="React templates" icon="seti:react">
+    Write the image as a component with inline styles. Async components can
+    load content entries, images and remote data.
+  </Card>
+  <Card title="Static or on demand" icon="rocket">
+    Prerender with `getStaticPaths`, or set `prerender = false` behind any
+    Astro adapter. Vercel needs no extra configuration.
+  </Card>
+  <Card title="Fonts and scripts" icon="document">
+    Register your own fonts. Thai, Japanese, Korean and Arabic fall back to
+    Noto Sans automatically.
+  </Card>
+  <Card title="Emoji" icon="star">
+    Twemoji, Noto, OpenMoji, Fluent or your own font's glyphs.
+  </Card>
+  <Card title="Debug in the browser" icon="magnifier">
+    Swap `.png` for `.debug` to see the template as a live HTML page.
+  </Card>
+  <Card title="WebAssembly renderer" icon="setting">
+    Takumi runs on WASM everywhere, so there is no native binary to ship.
+  </Card>
+</CardGrid>
