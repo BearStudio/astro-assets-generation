@@ -41,3 +41,5 @@ yarn-error.log*
 
 # The file should be auto-deleted after the build but just in case
 packages/astro-assets-generation/src/emoji-data.json
+# Astro generated types
+.astro/

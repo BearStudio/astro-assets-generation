@@ -1,0 +1,235 @@
+---
+title: "Tutorial: Generate OG images on demand"
+description: Switch a blog from build-time images to images rendered by a server adapter on the first request.
+sidebar:
+  label: Server adapter (on demand)
+  order: 2
+---
+
+import { Steps, Aside } from "@astrojs/starlight/components";
+
+In the [static tutorial](../static-og-images/) every image is rendered during
+`astro build`. That is ideal for a few hundred pages. With tens of thousands of
+pages, or content that changes between deploys, you want the image rendered
+when someone first asks for it.
+
+In this tutorial you will take the blog from the static tutorial and move its
+image route to on-demand rendering with the Node adapter. The blog pages stay
+static. Only the image route runs on the server.
+
+By the end you will have:
+
+- A Node server that serves the site.
+- An image route that renders any post's image on the first request, including
+  posts that did not exist at build time.
+- Correct 404 responses for unknown posts.
+- Cache headers so the image is rendered once, not on every hit.
+
+Expect about 15 minutes.
+
+## Prerequisites
+
+- The finished project from the
+  [static tutorial](../static-og-images/). If you skipped it, complete steps 1
+  to 6 of that tutorial first. You need the blog collection, the config file,
+  the template and the API route.
+
+<Aside type="note">
+The tutorial uses the Node adapter because you can run it locally. The same
+changes apply to Vercel, Netlify or Cloudflare. See
+[Deploy to Vercel](../../guides/deploy-to-vercel/) for the one extra thing
+Vercel needs.
+</Aside>
+
+## 1. Add a server adapter
+
+Astro needs an adapter to run code at request time.
+
+```bash
+pnpm astro add node
+```
+
+Answer **yes** to every prompt. Your config now has an `adapter` entry:
+
+```javascript title="astro.config.mjs" ins={4,9}
+import { defineConfig } from "astro/config";
+import react from "@astrojs/react";
+import { astroAssetsGeneration } from "@bearstudio/astro-assets-generation";
+import node from "@astrojs/node";
+
+export default defineConfig({
+  site: "https://example.com",
+  integrations: [react(), astroAssetsGeneration()],
+  adapter: node({ mode: "standalone" }),
+});
+```
+
+Leave `output` at its default. Pages are still prerendered unless a file opts
+out, which is exactly what the image route will do.
+
+## 2. Opt the image route out of prerendering
+
+Open the API route. Delete the `getStaticPaths` export and its two imports
+(`getStaticPathsForAssets` and `getCollection`), then add
+`export const prerender = false`. The file becomes:
+
+```typescript title="src/pages/blog/[slug]/assets/[__image].[__type].ts"
+import { apiImageEndpoint } from "@bearstudio/astro-assets-generation";
+import type { APIRoute } from "astro";
+import "../../../../lib/assets";
+
+export const prerender = false;
+
+export const GET: APIRoute = apiImageEndpoint(
+  import.meta.glob("./_*.tsx", { eager: true }),
+);
+```
+
+There is no list of paths anymore. Whatever `slug`, `__image` and `__type`
+appear in the URL are passed straight to the handler.
+
+## 3. Remove the disk loader
+
+The disk loader exists for builds without a server. Now that a server runs, the
+library can fetch fonts and images from `siteUrl` over HTTP, and the disk
+loader gets in the way: bundlers trace its `dist/` reads and ship your whole
+build output inside the server function.
+
+```typescript title="src/lib/assets.ts" del={2,7-9}
+import { configure } from "@bearstudio/astro-assets-generation";
+import { diskLoader } from "@bearstudio/astro-assets-generation/disk-loader";
+
+configure({
+  siteUrl: import.meta.env.SITE ?? "http://localhost:4321",
+  isDev: import.meta.env.DEV,
+  // Static builds have no server to fetch from, so fonts and images are
+  // read from `dist/` and `public/` on disk instead.
+  loadAsset: diskLoader(),
+});
+```
+
+<Aside type="caution">
+`siteUrl` must be the URL the server can reach itself on. When you later add
+fonts from `public/` or Astro images, the running server fetches them from
+`siteUrl`. On a real deployment that is your production domain, which is what
+`site` in the config already holds.
+</Aside>
+
+## 4. Return a 404 for unknown posts
+
+With static paths, a URL for a missing post simply did not exist. Now every URL
+reaches the template, and the template's `throw new Error(...)` would surface as
+a 500. Throw the library's not-found error instead and the handler answers 404.
+
+```tsx title="src/pages/blog/[slug]/assets/_og-image.tsx" ins={3,17} del={16}
+import { getEntry } from "astro:content";
+import type { AssetImageConfig } from "@bearstudio/astro-assets-generation";
+import { NotFoundAssetError } from "@bearstudio/astro-assets-generation";
+
+export const config: AssetImageConfig = {
+  width: 1200,
+  height: 630,
+};
+
+export default async function OgImage({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const post = await getEntry("blog", params.slug);
+  if (!post) throw new Error(`Unknown post: ${params.slug}`);
+  if (!post) throw new NotFoundAssetError();
+
+  // ... unchanged
+}
+```
+
+## 5. Build and run the server
+
+```bash
+pnpm build
+pnpm preview
+```
+
+The build output no longer lists any `og-image.png` files: nothing is rendered
+yet. The Node adapter prints the address it listens on, usually
+[http://localhost:4321](http://localhost:4321).
+
+Now request an image:
+
+```bash
+curl -o hello.png -w "%{http_code} %{content_type}\n" \
+  http://localhost:4321/blog/hello-world/assets/og-image.png
+```
+
+You get `200 image/png` and the server log shows the template being rendered.
+Open `hello.png` to check it.
+
+Try the other formats and a missing post:
+
+```bash
+curl -o /dev/null -w "%{http_code}\n" http://localhost:4321/blog/hello-world/assets/og-image.jpg
+curl -o /dev/null -w "%{http_code}\n" http://localhost:4321/blog/does-not-exist/assets/og-image.png
+curl -o /dev/null -w "%{http_code}\n" http://localhost:4321/blog/hello-world/assets/og-image.gif
+```
+
+Expected responses:
+
+| URL                     | Status |
+| ----------------------- | ------ |
+| `og-image.jpg`          | 200    |
+| unknown slug            | 404    |
+| unsupported `.gif` type | 404    |
+
+## 6. Add cache headers
+
+Every request now renders the image. Rendering takes tens of milliseconds and
+some CPU, so tell browsers and CDNs to keep the result. Wrap the handler:
+
+```typescript title="src/pages/blog/[slug]/assets/[__image].[__type].ts"
+import { apiImageEndpoint } from "@bearstudio/astro-assets-generation";
+import type { APIRoute } from "astro";
+import "../../../../lib/assets";
+
+export const prerender = false;
+
+const render = apiImageEndpoint(
+  import.meta.glob("./_*.tsx", { eager: true }),
+);
+
+export const GET: APIRoute = async (context) => {
+  const response = await render(context);
+  if (response.ok) {
+    response.headers.set(
+      "Cache-Control",
+      "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+    );
+  }
+  return response;
+};
+```
+
+Rebuild, restart the preview server and check the header:
+
+```bash
+curl -sI http://localhost:4321/blog/hello-world/assets/og-image.png | grep -i cache-control
+```
+
+Behind a CDN this means the image is rendered roughly once a day per post, no
+matter how many people share the link.
+
+## What you built
+
+The blog pages are still static files. The image route is a small server
+function that renders any post's image on request, returns 404 for unknown
+posts and lets caches hold the result. If you publish a new post without
+rebuilding, its image renders the first time a crawler asks for it.
+
+## Where to go next
+
+- [Deploy to Vercel](../../guides/deploy-to-vercel/) for the serverless
+  version of this setup.
+- [Add custom fonts](../../guides/custom-fonts/), keeping in mind the server
+  fetches them from `siteUrl`.
+- [Reference: API route](../../reference/api-route/) for the full list of
+  response codes and the params your template receives.
