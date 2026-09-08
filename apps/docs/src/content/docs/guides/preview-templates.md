@@ -26,7 +26,7 @@ default `["png", "jpg"]`, the `.debug` URL returns 404.
 Add `"debug"` to the image types in dev only, so preview pages never end up in
 your build output:
 
-```typescript title="src/pages/blog/[slug]/assets/[__image].[__type].ts" ins={5}
+```typescript title="src/pages/blog/[slug]/assets/[__image].[__type].ts" ins={6}
 export const getStaticPaths = async () => {
   const posts = await getCollection("blog");
   return getStaticPathsForAssets(
